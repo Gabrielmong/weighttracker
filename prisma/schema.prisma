@@ -1,0 +1,126 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Gender {
+  MALE
+  FEMALE
+}
+
+enum WeightGoal {
+  LOSE
+  GAIN
+  MAINTAIN
+}
+
+enum MetricKey {
+  WEIGHT
+  BMI
+  BODY_FAT_PCT
+  SUBCUTANEOUS_FAT_PCT
+  VISCERAL_FAT_RATING
+  SKELETAL_MUSCLE_PCT
+  MUSCLE_MASS_KG
+  PROTEIN_PCT
+  BMR
+  METABOLIC_AGE
+}
+
+enum DirectionType {
+  FIXED
+  GOAL_RELATIVE
+}
+
+enum FixedDirection {
+  UP
+  DOWN
+}
+
+model User {
+  id           String     @id @default(cuid())
+  displayName  String     @unique
+  passwordHash String
+  gender       Gender
+  birthdate    DateTime
+  weightGoal   WeightGoal
+  isAdmin      Boolean    @default(false)
+  createdAt    DateTime   @default(now())
+
+  measurements Measurement[]
+  conditions   UserCondition[]
+}
+
+model Challenge {
+  id        String    @id @default(cuid())
+  name      String
+  startDate DateTime
+  endDate   DateTime?
+  isActive  Boolean   @default(true)
+
+  measurements Measurement[]
+}
+
+model Measurement {
+  id                 String   @id @default(cuid())
+  userId             String
+  challengeId        String
+  recordedAt         DateTime @default(now())
+  weightKg           Float
+  bmi                Float
+  bodyFatPct         Float
+  subcutaneousFatPct Float
+  visceralFatRating  Float
+  skeletalMusclePct  Float
+  muscleMassKg       Float
+  proteinPct         Float?
+  bmr                Float?
+  metabolicAge       Int?
+  isBaseline         Boolean  @default(false)
+
+  user      User      @relation(fields: [userId], references: [id])
+  challenge Challenge @relation(fields: [challengeId], references: [id])
+
+  @@index([userId, challengeId, recordedAt])
+}
+
+model MetricConfig {
+  id             String          @id @default(cuid())
+  challengeId    String?
+  metricKey      MetricKey
+  weight         Float
+  directionType  DirectionType
+  fixedDirection FixedDirection?
+
+  @@unique([challengeId, metricKey])
+}
+
+model HandicapBracket {
+  id         String @id @default(cuid())
+  gender     Gender
+  minAge     Int
+  maxAge     Int
+  multiplier Float
+}
+
+model Condition {
+  id          String  @id @default(cuid())
+  name        String  @unique
+  description String?
+  multiplier  Float
+
+  users UserCondition[]
+}
+
+model UserCondition {
+  userId      String
+  conditionId String
+
+  user      User      @relation(fields: [userId], references: [id])
+  condition Condition @relation(fields: [conditionId], references: [id])
+
+  @@id([userId, conditionId])
+}

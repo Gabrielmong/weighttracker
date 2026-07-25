@@ -208,11 +208,17 @@ git commit -m "Scaffold Next.js app with MUI theme and Vitest"
 
 ## Task 2: Prisma Schema, Migrations, Seed Data
 
+> **Prisma version note:** this project resolved onto Prisma 7, which changed
+> the CLI/config surface significantly from earlier Prisma majors. The
+> differences (and why) are called out inline below wherever they apply. If a
+> future Prisma major changes this again, treat the `npx prisma generate` /
+> `npx prisma migrate dev` error output as authoritative over this doc.
+
 **Files:**
 - Create: `prisma/schema.prisma`
+- Create: `prisma.config.ts` (Prisma 7 moved datasource URL and seed command out of `schema.prisma`/`package.json` and into this file — see Step 1a)
 - Create: `prisma/seed.ts`
 - Create: `src/lib/prisma.ts`
-- Modify: `package.json` (add `prisma.seed` config)
 - Create: `.env` (local, gitignored), `.env.example`
 
 **Interfaces:**
@@ -220,6 +226,14 @@ git commit -m "Scaffold Next.js app with MUI theme and Vitest"
 - Produces: Prisma models `User`, `Challenge`, `Measurement`, `MetricConfig`, `HandicapBracket`, `Condition`, `UserCondition` with fields exactly as below — all later tasks reference these field names verbatim.
 
 - [ ] **Step 1: Write the schema**
+
+Prisma 7 no longer allows `url = env("DATABASE_URL")` inside the
+`datasource` block in `schema.prisma` — the CLI now reads the connection URL
+from `prisma.config.ts` (Step 1a), and the generated `PrismaClient` requires an
+explicit driver adapter at runtime (Step 4) rather than reading `DATABASE_URL`
+implicitly. If you're on an earlier Prisma major, put `url = env("DATABASE_URL")`
+back in the `datasource` block and skip `prisma.config.ts`/the adapter in
+Step 4 in favor of a plain `new PrismaClient()`.
 
 Create `prisma/schema.prisma`:
 ```prisma
@@ -229,7 +243,6 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
 }
 
 enum Gender {
@@ -352,6 +365,36 @@ model UserCondition {
 }
 ```
 
+- [ ] **Step 1a: Create the Prisma config file (Prisma 7)**
+
+Install the packages this requires (also pulls in the Postgres driver adapter
+needed by Step 4):
+```bash
+npm install dotenv @prisma/adapter-pg pg
+npm install -D @types/pg
+```
+
+Create `prisma.config.ts` at the project root:
+```ts
+import 'dotenv/config';
+import { defineConfig } from 'prisma/config';
+
+export default defineConfig({
+  schema: 'prisma/schema.prisma',
+  migrations: {
+    path: 'prisma/migrations',
+    seed: 'tsx prisma/seed.ts',
+  },
+  datasource: {
+    url: process.env.DATABASE_URL,
+  },
+});
+```
+
+This replaces both the `datasource.url` that used to live in `schema.prisma`
+and the `"prisma": { "seed": "..." }` block that used to live in
+`package.json` in earlier Prisma versions — don't add either of those here.
+
 - [ ] **Step 2: Create local env files**
 
 Create `.env.example`:
@@ -361,9 +404,17 @@ NEXTAUTH_SECRET="replace-with-openssl-rand-base64-32"
 NEXTAUTH_URL="http://localhost:3000"
 ```
 
-Create `.env` (gitignored) with your real local Postgres connection string and a generated `NEXTAUTH_SECRET` (`openssl rand -base64 32`).
+Create `.env` (gitignored) with your real Postgres connection string and a
+generated `NEXTAUTH_SECRET` (`node -e "console.log(require('crypto').randomBytes(32).toString('base64'))"`,
+or `openssl rand -base64 32` if available).
 
-Confirm `.gitignore` includes `.env` and `node_modules` (create-next-app should have added both already — verify).
+Confirm `.gitignore` includes `.env*` and `/node_modules` (create-next-app
+adds both by default — verify).
+
+If you don't have a Postgres instance available (no local server, no Docker),
+stop here and ask the user for a connection string (e.g. a free Neon/Supabase
+project) or for permission to install Postgres locally — don't guess or spin
+up infrastructure unasked.
 
 - [ ] **Step 3: Run the initial migration**
 
@@ -371,17 +422,42 @@ Run:
 ```bash
 npx prisma migrate dev --name init
 ```
-Expected: migration created under `prisma/migrations/`, applied to local DB, Prisma Client generated.
+Expected: migration created under `prisma/migrations/`, applied to the
+database, Prisma Client generated. If this reports schema drift against an
+already-dirty database (e.g. from earlier experimentation against the same
+connection string), treat `prisma migrate reset` as a destructive action —
+stop and get explicit user confirmation first, per this project's standing
+rule on destructive operations. Prisma's CLI itself will also refuse to run
+`migrate reset` unattended when it detects an AI agent invoking it, and will
+require the user's exact consenting message to be passed via the
+`PRISMA_USER_CONSENT_FOR_DANGEROUS_AI_ACTION` env var.
+
+If `prisma generate` doesn't run automatically as part of `migrate dev`, run
+it explicitly:
+```bash
+npx prisma generate
+```
 
 - [ ] **Step 4: Create the Prisma client singleton**
+
+Prisma 7's generated client throws
+`PrismaClientInitializationError: ... A driver adapter is required` if
+constructed with no arguments — `new PrismaClient()` no longer reads
+`DATABASE_URL` implicitly. Pass a `@prisma/adapter-pg` adapter explicitly.
 
 Create `src/lib/prisma.ts`:
 ```ts
 import { PrismaClient } from '@prisma/client';
+import { PrismaPg } from '@prisma/adapter-pg';
 
 const globalForPrisma = globalThis as unknown as { prisma: PrismaClient };
 
-export const prisma = globalForPrisma.prisma ?? new PrismaClient();
+function createPrismaClient() {
+  const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL });
+  return new PrismaClient({ adapter });
+}
+
+export const prisma = globalForPrisma.prisma ?? createPrismaClient();
 
 if (process.env.NODE_ENV !== 'production') {
   globalForPrisma.prisma = prisma;
@@ -390,17 +466,35 @@ if (process.env.NODE_ENV !== 'production') {
 
 - [ ] **Step 5: Write the seed script**
 
-Create `prisma/seed.ts`:
+Create `prisma/seed.ts`. Two things differ from a naive implementation, both
+worth calling out:
+
+1. It must construct its own `PrismaClient` with the same `@prisma/adapter-pg`
+   pattern as `src/lib/prisma.ts` (Prisma 7 requires this everywhere, not just
+   in app code).
+2. It must be **idempotent** — `npx prisma db seed` can be run more than once
+   (e.g. after an interrupted run), so re-running it must not create duplicate
+   `Challenge`/`HandicapBracket` rows. Use `findFirst`-or-`create` for the
+   challenge, a count-guard for the brackets, and `upsert` by `displayName` for
+   the admin user (a plain single-column unique, so `upsert` works fine there —
+   see the `MetricConfig` note below for why it does *not* work for that
+   model).
+
 ```ts
+import 'dotenv/config';
 import { PrismaClient } from '@prisma/client';
+import { PrismaPg } from '@prisma/adapter-pg';
 import bcrypt from 'bcryptjs';
 
-const prisma = new PrismaClient();
+const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL });
+const prisma = new PrismaClient({ adapter });
 
 async function main() {
-  const challenge = await prisma.challenge.create({
-    data: { name: 'Family Challenge 2026', startDate: new Date(), isActive: true },
-  });
+  const challenge =
+    (await prisma.challenge.findFirst({ where: { isActive: true } })) ??
+    (await prisma.challenge.create({
+      data: { name: 'Family Challenge 2026', startDate: new Date(), isActive: true },
+    }));
 
   const defaultMetrics: Array<{
     metricKey:
@@ -423,11 +517,24 @@ async function main() {
   ];
 
   for (const metric of defaultMetrics) {
-    await prisma.metricConfig.upsert({
-      where: { challengeId_metricKey: { challengeId: null as unknown as string, metricKey: metric.metricKey } },
-      update: {},
-      create: { ...metric, challengeId: null },
+    // Compound unique indexes can't be looked up with `null` as a key component
+    // via Prisma's generated shorthand (SQL treats NULLs as distinct values), so
+    // Prisma rejects `upsert({ where: { challengeId_metricKey: { challengeId: null, ... } } })`
+    // at runtime with "Argument `challengeId` must not be null." Global-default
+    // rows (challengeId: null) must be found manually instead. The admin
+    // service's `updateMetricConfig` (Task 13) hits this same limitation and
+    // uses the identical find-then-create/update pattern.
+    const existing = await prisma.metricConfig.findFirst({
+      where: { challengeId: null, metricKey: metric.metricKey },
     });
+    if (existing) {
+      await prisma.metricConfig.update({
+        where: { id: existing.id },
+        data: { weight: metric.weight, directionType: metric.directionType, fixedDirection: metric.fixedDirection },
+      });
+    } else {
+      await prisma.metricConfig.create({ data: { ...metric, challengeId: null } });
+    }
   }
 
   const brackets = [
@@ -438,13 +545,18 @@ async function main() {
     { gender: 'FEMALE' as const, minAge: 30, maxAge: 44, multiplier: 1.1 },
     { gender: 'FEMALE' as const, minAge: 45, maxAge: 120, multiplier: 1.2 },
   ];
-  for (const bracket of brackets) {
-    await prisma.handicapBracket.create({ data: bracket });
+  const existingBrackets = await prisma.handicapBracket.count();
+  if (existingBrackets === 0) {
+    for (const bracket of brackets) {
+      await prisma.handicapBracket.create({ data: bracket });
+    }
   }
 
   const adminPasswordHash = await bcrypt.hash('changeme123', 10);
-  await prisma.user.create({
-    data: {
+  await prisma.user.upsert({
+    where: { displayName: 'Gabriel' },
+    update: {},
+    create: {
       displayName: 'Gabriel',
       passwordHash: adminPasswordHash,
       gender: 'MALE',
@@ -465,28 +577,22 @@ main()
   .finally(() => prisma.$disconnect());
 ```
 
-Add to `package.json`:
-```json
-{
-  "prisma": {
-    "seed": "tsx prisma/seed.ts"
-  }
-}
-```
-
 - [ ] **Step 6: Run the seed and verify**
 
 Run:
 ```bash
 npx prisma db seed
-npx prisma studio
 ```
-Expected: `prisma db seed` completes with "Seed complete: { challengeId: ... }" logged; Prisma Studio (opens in browser) shows 1 `User`, 1 `Challenge`, 10 `MetricConfig` rows, 6 `HandicapBracket` rows. Close Prisma Studio after verifying.
+Expected: completes with "Seed complete: { challengeId: ... }" logged. Verify
+row counts with a one-off script (or `npx prisma studio` if you're in an
+interactive session where a browser tab is practical) — expect 1 `User`, 1
+`Challenge`, 10 `MetricConfig` rows, 6 `HandicapBracket` rows. Run the seed a
+second time and confirm the counts don't change (idempotency check).
 
 - [ ] **Step 7: Commit**
 
 ```bash
-git add prisma package.json .env.example .gitignore src/lib/prisma.ts
+git add prisma prisma.config.ts package.json .env.example .gitignore src/lib/prisma.ts
 git commit -m "Add Prisma schema, seed data, and client singleton"
 ```
 
