@@ -1,7 +1,9 @@
 'use client';
 
+import { useState } from 'react';
 import { gql } from '@apollo/client';
 import { useQuery } from '@apollo/client/react';
+import { TextField, MenuItem } from '@mui/material';
 import { MultiPersonTimelineChart } from './MultiPersonTimelineChart';
 import { METRIC_LABELS } from '@/features/scoring/metricLabels';
 import { MetricKey } from '@/features/scoring/types';
@@ -31,13 +33,12 @@ export function FieldComparisonChart({
   gender,
   minAge,
   maxAge,
-  metricKey,
 }: {
   gender: 'MALE' | 'FEMALE' | null;
   minAge?: number;
   maxAge?: number;
-  metricKey: MetricKey;
 }) {
+  const [metricKey, setMetricKey] = useState<MetricKey>('WEIGHT');
   const { data } = useQuery<FieldComparisonQueryData>(FIELD_COMPARISON_QUERY, {
     variables: { gender, minAge: minAge ?? null, maxAge: maxAge ?? null, metricKey },
   });
@@ -52,9 +53,23 @@ export function FieldComparisonChart({
 
   return (
     <MultiPersonTimelineChart
-      title={`${METRIC_LABELS[metricKey]} Over Time`}
+      title="Compare a Field Over Time"
       people={people}
       emptyMessage="No data yet for this field."
+      headerContent={
+        <TextField
+          select
+          label="Field"
+          size="small"
+          value={metricKey}
+          onChange={(e) => setMetricKey(e.target.value as MetricKey)}
+          sx={{ minWidth: 180 }}
+        >
+          {Object.entries(METRIC_LABELS).map(([key, label]) => (
+            <MenuItem key={key} value={key}>{label}</MenuItem>
+          ))}
+        </TextField>
+      }
     />
   );
 }

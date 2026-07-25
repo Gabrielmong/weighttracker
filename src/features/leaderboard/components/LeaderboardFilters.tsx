@@ -1,6 +1,5 @@
 import { ToggleButtonGroup, ToggleButton, Stack, TextField, MenuItem } from '@mui/material';
 import { METRIC_LABELS } from '@/features/scoring/metricLabels';
-import { MetricKey } from '@/features/scoring/types';
 
 export type AgeBracketOption = 'ALL' | '0-29' | '30-44' | '45-120';
 
@@ -30,13 +29,9 @@ export function ageBracketToRange(bracket: AgeBracketOption): { minAge?: number;
 export function LeaderboardFilters({
   value,
   onChange,
-  compareMetricKey,
-  onCompareMetricKeyChange,
 }: {
   value: LeaderboardFilterState;
   onChange: (value: LeaderboardFilterState) => void;
-  compareMetricKey: MetricKey;
-  onCompareMetricKeyChange: (metricKey: MetricKey) => void;
 }) {
   return (
     <Stack
@@ -90,19 +85,6 @@ export function LeaderboardFilters({
       >
         {METRIC_FILTER_OPTIONS.map((option) => (
           <MenuItem key={option.value} value={option.value}>{option.label}</MenuItem>
-        ))}
-      </TextField>
-      <TextField
-        select
-        label="Field"
-        size="small"
-        fullWidth
-        value={compareMetricKey}
-        onChange={(e) => onCompareMetricKeyChange(e.target.value as MetricKey)}
-        sx={{ width: { xs: '100%', sm: 180 } }}
-      >
-        {Object.entries(METRIC_LABELS).map(([key, label]) => (
-          <MenuItem key={key} value={key}>{label}</MenuItem>
         ))}
       </TextField>
     </Stack>

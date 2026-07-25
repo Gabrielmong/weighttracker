@@ -1,7 +1,8 @@
 'use client';
 
+import { ReactNode } from 'react';
 import { LineChart } from '@mui/x-charts/LineChart';
-import { Paper, Typography } from '@mui/material';
+import { Paper, Typography, Stack } from '@mui/material';
 
 export interface PersonTimeline {
   userId: string;
@@ -19,16 +20,26 @@ export function MultiPersonTimelineChart({
   title,
   people,
   emptyMessage,
+  headerContent,
 }: {
   title: string;
   people: PersonTimeline[];
   emptyMessage: string;
+  /** Rendered inline with the title (e.g. a field selector), right-aligned. */
+  headerContent?: ReactNode;
 }) {
+  const header = (
+    <Stack direction="row" spacing={2} sx={{ mb: 1, flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between' }}>
+      <Typography variant="h6">{title}</Typography>
+      {headerContent}
+    </Stack>
+  );
+
   const peopleWithData = people.filter((person) => person.points.length > 0);
   if (peopleWithData.length === 0) {
     return (
       <Paper sx={{ p: 2, mb: 2 }}>
-        <Typography variant="h6" gutterBottom>{title}</Typography>
+        {header}
         <Typography color="text.secondary">{emptyMessage}</Typography>
       </Paper>
     );
@@ -55,7 +66,7 @@ export function MultiPersonTimelineChart({
 
   return (
     <Paper sx={{ p: 2, mb: 2 }}>
-      <Typography variant="h6" gutterBottom>{title}</Typography>
+      {header}
       <LineChart
         dataset={dataset}
         xAxis={[{ dataKey: 'date', scaleType: 'point', label: 'Date' }]}
