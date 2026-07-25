@@ -77,7 +77,7 @@ describe('getLeaderboard', () => {
     expect(rows).toHaveLength(1);
   });
 
-  it('includes one timeline point per non-baseline snapshot, ending at the same value as finalScore', async () => {
+  it('anchors the timeline at the baseline (value 0) plus one point per non-baseline snapshot', async () => {
     const threeSnapshots = {
       ...baseUser,
       measurements: [
@@ -88,23 +88,31 @@ describe('getLeaderboard', () => {
     };
     (prisma.user.findMany as any).mockResolvedValue([threeSnapshots]);
     const rows = await getLeaderboard({});
+    expect(rows[0].timeline).toHaveLength(3);
+    expect(rows[0].timeline[0]).toEqual({ recordedAt: new Date('2026-01-01').toISOString(), value: 0 });
+    expect(rows[0].timeline[1].recordedAt).toBe(new Date('2026-02-01').toISOString());
+    expect(rows[0].timeline[2].recordedAt).toBe(new Date('2026-03-01').toISOString());
+    expect(rows[0].timeline[2].value).toBeCloseTo(rows[0].finalScore, 5);
+  });
+
+  it('still produces a two-point timeline (baseline + latest) for a user with only one follow-up measurement', async () => {
+    (prisma.user.findMany as any).mockResolvedValue([baseUser]);
+    const rows = await getLeaderboard({});
     expect(rows[0].timeline).toHaveLength(2);
-    expect(rows[0].timeline[0].recordedAt).toBe(new Date('2026-02-01').toISOString());
-    expect(rows[0].timeline[1].recordedAt).toBe(new Date('2026-03-01').toISOString());
-    expect(rows[0].timeline[1].value).toBeCloseTo(rows[0].finalScore, 5);
+    expect(rows[0].timeline[0].value).toBe(0);
   });
 
   it('reports raw (unhandicapped) values in the timeline when scoreType is RAW', async () => {
     (prisma.user.findMany as any).mockResolvedValue([baseUser]);
     const rows = await getLeaderboard({ scoreType: 'RAW' });
-    expect(rows[0].timeline[0].value).toBeCloseTo(rows[0].rawScore, 5);
+    expect(rows[0].timeline[1].value).toBeCloseTo(rows[0].rawScore, 5);
   });
 
   it('reports per-metric pctChange in the timeline when metricKey is provided', async () => {
     (prisma.user.findMany as any).mockResolvedValue([baseUser]);
     const rows = await getLeaderboard({ metricKey: 'BODY_FAT_PCT' });
-    expect(rows[0].timeline).toHaveLength(1);
-    expect(rows[0].timeline[0].value).toBeCloseTo(rows[0].metricPctChange!, 5);
+    expect(rows[0].timeline).toHaveLength(2);
+    expect(rows[0].timeline[1].value).toBeCloseTo(rows[0].metricPctChange!, 5);
   });
 
   it('ranks by a single metric, unhandicapped, when metricKey is provided', async () => {

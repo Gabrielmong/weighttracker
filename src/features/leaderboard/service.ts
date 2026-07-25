@@ -108,7 +108,11 @@ export async function getLeaderboard(filters: LeaderboardFilters, asOf: Date = n
 
     const conditionMultipliers = user.conditions.map((uc) => uc.condition.multiplier);
 
-    const timeline: LeaderboardTimelinePoint[] = [];
+    // Anchor every line at the baseline itself (0% change / 0 score by
+    // definition, since nothing has changed relative to itself yet). Without
+    // this, a user with only one follow-up measurement has a single-point
+    // "timeline" that can't render as a line at all.
+    const timeline: LeaderboardTimelinePoint[] = [{ recordedAt: baseline.recordedAt.toISOString(), value: 0 }];
     for (const snapshot of nonBaseline) {
       const value = computeSnapshotValue({
         baseline,
