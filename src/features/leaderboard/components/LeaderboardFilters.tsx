@@ -42,11 +42,17 @@ export function LeaderboardFilters({
   onChange: (value: LeaderboardFilterState) => void;
 }) {
   return (
-    <Stack direction="row" spacing={2} sx={{ mb: 2, flexWrap: 'wrap' }}>
+    <Stack
+      direction={{ xs: 'column', sm: 'row' }}
+      spacing={2}
+      sx={{ mb: 2, flexWrap: { sm: 'wrap' }, alignItems: { xs: 'stretch', sm: 'center' } }}
+    >
       <ToggleButtonGroup
         exclusive
+        fullWidth
         value={value.gender}
         onChange={(_e, gender) => gender && onChange({ ...value, gender })}
+        sx={{ width: { xs: '100%', sm: 'auto' } }}
       >
         <ToggleButton value="ALL">Everyone</ToggleButton>
         <ToggleButton value="MALE">Men</ToggleButton>
@@ -54,8 +60,10 @@ export function LeaderboardFilters({
       </ToggleButtonGroup>
       <ToggleButtonGroup
         exclusive
+        fullWidth
         value={value.scoreType}
         onChange={(_e, scoreType) => scoreType && onChange({ ...value, scoreType })}
+        sx={{ width: { xs: '100%', sm: 'auto' } }}
       >
         <ToggleButton value="FINAL">Handicapped</ToggleButton>
         <ToggleButton value="RAW">Raw</ToggleButton>
@@ -64,9 +72,10 @@ export function LeaderboardFilters({
         select
         label="Age Bracket"
         size="small"
+        fullWidth
         value={value.ageBracket}
         onChange={(e) => onChange({ ...value, ageBracket: e.target.value as AgeBracketOption })}
-        sx={{ minWidth: 140 }}
+        sx={{ width: { xs: '100%', sm: 140 } }}
       >
         <MenuItem value="ALL">All Ages</MenuItem>
         <MenuItem value="0-29">0-29</MenuItem>
@@ -77,9 +86,10 @@ export function LeaderboardFilters({
         select
         label="Rank By"
         size="small"
+        fullWidth
         value={value.metricKey}
         onChange={(e) => onChange({ ...value, metricKey: e.target.value })}
-        sx={{ minWidth: 180 }}
+        sx={{ width: { xs: '100%', sm: 180 } }}
       >
         {METRIC_FILTER_OPTIONS.map((option) => (
           <MenuItem key={option.value} value={option.value}>{option.label}</MenuItem>
