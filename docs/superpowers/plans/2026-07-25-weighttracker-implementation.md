@@ -3296,6 +3296,9 @@ export function TimelineChart({ timeline, metricKey }: { timeline: TimelinePoint
 
 - [ ] **Step 7: Wire up the user detail page**
 
+Same `useQuery` generic requirement as the leaderboard page in Task 10 — type
+the query result explicitly rather than letting `data` default to `{}`.
+
 Create `src/app/users/[id]/page.tsx`:
 ```tsx
 'use client';
@@ -3305,7 +3308,20 @@ import { useQuery } from '@apollo/client/react';
 import { useParams } from 'next/navigation';
 import { Container, Typography, CircularProgress, Stack } from '@mui/material';
 import { TimelineChart } from '@/features/users/components/TimelineChart';
-import { ScoreBreakdownPanel } from '@/features/users/components/ScoreBreakdownPanel';
+import { ScoreBreakdownPanel, ScoreBreakdown } from '@/features/users/components/ScoreBreakdownPanel';
+
+interface TimelinePoint {
+  recordedAt: string;
+  metricChanges: { metricKey: string; pctChange: number }[];
+}
+
+interface UserDetailQueryData {
+  userDetail: {
+    displayName: string;
+    timeline: TimelinePoint[];
+    scoreBreakdown: ScoreBreakdown | null;
+  } | null;
+}
 
 const USER_DETAIL_QUERY = gql`
   query UserDetail($userId: ID!) {
@@ -3334,7 +3350,7 @@ const USER_DETAIL_QUERY = gql`
 
 export default function UserDetailPage() {
   const params = useParams<{ id: string }>();
-  const { data, loading } = useQuery(USER_DETAIL_QUERY, { variables: { userId: params.id } });
+  const { data, loading } = useQuery<UserDetailQueryData>(USER_DETAIL_QUERY, { variables: { userId: params.id } });
 
   if (loading) return <CircularProgress />;
   if (!data?.userDetail) return <Typography>User not found.</Typography>;

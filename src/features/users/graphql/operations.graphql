@@ -1,0 +1,23 @@
+query UserDetail($userId: ID!) {
+  userDetail(userId: $userId) {
+    userId
+    displayName
+    timeline {
+      recordedAt
+      metricChanges {
+        metricKey
+        pctChange
+      }
+    }
+    scoreBreakdown {
+      rawScore
+      ageGenderMultiplier
+      conditionMultipliers
+      finalScore
+      metricChanges {
+        metricKey
+        pctChange
+      }
+    }
+  }
+}
