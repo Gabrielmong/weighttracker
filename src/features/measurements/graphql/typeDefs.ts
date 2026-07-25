@@ -26,6 +26,7 @@ export const typeDefs = `#graphql
     proteinPct: Float
     bmr: Float
     metabolicAge: Int
+    recordedAt: String
   }
 
   extend type Query {

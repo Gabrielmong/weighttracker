@@ -4,18 +4,20 @@ import { MockedProvider } from '@apollo/client/testing/react';
 import { MeasurementForm, RECORD_MEASUREMENT } from './MeasurementForm';
 
 describe('MeasurementForm', () => {
-  it('renders required fields and an optional-fields toggle', () => {
+  it('renders required fields and an optional-fields toggle, defaulting the date to today', () => {
     render(
       <MockedProvider mocks={[]}>
         <MeasurementForm onSaved={() => {}} />
       </MockedProvider>
     );
+    const dateInput = screen.getByLabelText(/measurement date/i) as HTMLInputElement;
+    expect(dateInput.value).toBe(new Date().toISOString().slice(0, 10));
     expect(screen.getByLabelText(/weight/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/body fat/i)).toBeInTheDocument();
     expect(screen.getByText(/optional fields/i)).toBeInTheDocument();
   });
 
-  it('submits the mutation with entered values', async () => {
+  it('submits the mutation with entered values, including a backdated measurement date', async () => {
     const onSaved = vi.fn();
     const mocks = [
       {
@@ -23,6 +25,7 @@ describe('MeasurementForm', () => {
           query: RECORD_MEASUREMENT,
           variables: {
             input: {
+              recordedAt: new Date('2026-01-15').toISOString(),
               weightKg: 85,
               bmi: 26,
               bodyFatPct: 20,
@@ -36,7 +39,7 @@ describe('MeasurementForm', () => {
             },
           },
         },
-        result: { data: { recordMeasurement: { id: 'm1', recordedAt: '2026-07-25', isBaseline: false } } },
+        result: { data: { recordMeasurement: { id: 'm1', recordedAt: '2026-01-15', isBaseline: false } } },
       },
     ];
 
@@ -46,6 +49,7 @@ describe('MeasurementForm', () => {
       </MockedProvider>
     );
 
+    fireEvent.change(screen.getByLabelText(/measurement date/i), { target: { value: '2026-01-15' } });
     fireEvent.change(screen.getByLabelText(/weight/i), { target: { value: '85' } });
     fireEvent.change(screen.getByLabelText(/^bmi/i), { target: { value: '26' } });
     fireEvent.change(screen.getByLabelText(/body fat/i), { target: { value: '20' } });

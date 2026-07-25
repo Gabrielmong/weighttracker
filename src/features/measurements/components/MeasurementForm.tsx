@@ -16,6 +16,7 @@ export const RECORD_MEASUREMENT = gql`
 `;
 
 interface FormState {
+  recordedAt: string;
   weightKg: string;
   bmi: string;
   bodyFatPct: string;
@@ -28,13 +29,17 @@ interface FormState {
   metabolicAge: string;
 }
 
-const emptyForm: FormState = {
+const emptyForm: Omit<FormState, 'recordedAt'> = {
   weightKg: '', bmi: '', bodyFatPct: '', subcutaneousFatPct: '', visceralFatRating: '',
   skeletalMusclePct: '', muscleMassKg: '', proteinPct: '', bmr: '', metabolicAge: '',
 };
 
+function today(): string {
+  return new Date().toISOString().slice(0, 10);
+}
+
 export function MeasurementForm({ onSaved }: { onSaved: () => void }) {
-  const [form, setForm] = useState<FormState>(emptyForm);
+  const [form, setForm] = useState<FormState>({ ...emptyForm, recordedAt: today() });
   const [showOptional, setShowOptional] = useState(false);
   const [recordMeasurement] = useMutation(RECORD_MEASUREMENT);
 
@@ -47,6 +52,7 @@ export function MeasurementForm({ onSaved }: { onSaved: () => void }) {
     await recordMeasurement({
       variables: {
         input: {
+          recordedAt: new Date(form.recordedAt).toISOString(),
           weightKg: Number(form.weightKg),
           bmi: Number(form.bmi),
           bodyFatPct: Number(form.bodyFatPct),
@@ -66,6 +72,14 @@ export function MeasurementForm({ onSaved }: { onSaved: () => void }) {
   return (
     <Box component="form" onSubmit={handleSubmit}>
       <Stack spacing={2}>
+        <TextField
+          label="Measurement Date"
+          type="date"
+          value={form.recordedAt}
+          onChange={setField('recordedAt')}
+          slotProps={{ inputLabel: { shrink: true } }}
+          required
+        />
         <TextField label="Weight (kg)" type="number" value={form.weightKg} onChange={setField('weightKg')} required />
         <TextField label="BMI" type="number" value={form.bmi} onChange={setField('bmi')} required />
         <TextField label="Body Fat %" type="number" value={form.bodyFatPct} onChange={setField('bodyFatPct')} required />
