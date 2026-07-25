@@ -1959,12 +1959,25 @@ export const typeDefs = `#graphql
 
 - [ ] **Step 6: Implement the resolvers**
 
+GraphQL's default `String` scalar serializer calls `.valueOf()` on non-plain
+objects before stringifying — for a JS `Date`, `valueOf()` returns epoch
+milliseconds, not a readable date. Since `recordedAt` comes straight off a
+Prisma `Measurement` row as a real `Date` object, returning it unconverted
+against a `recordedAt: String!` field silently serializes to a numeric
+millisecond string (e.g. `"1785009744181"`) instead of an ISO date — this
+only surfaces at request time, not in unit tests that mock the service layer,
+so add the explicit field resolver now rather than discovering it later via
+a live query.
+
 Create `src/features/measurements/graphql/resolvers.ts`:
 ```ts
 import { GraphQLContext, requireUser } from '@/lib/graphql/context';
 import { recordMeasurement, listMeasurementsForUser } from '../service';
 
 export const resolvers = {
+  Measurement: {
+    recordedAt: (parent: { recordedAt: Date }) => parent.recordedAt.toISOString(),
+  },
   Query: {
     myMeasurements: async (_parent: unknown, _args: unknown, context: GraphQLContext) => {
       const user = requireUser(context);
@@ -3088,12 +3101,18 @@ export const typeDefs = `#graphql
 
 - [ ] **Step 6: Implement the resolver**
 
+Same `recordedAt` serialization fix as the measurements resolvers (Task 7,
+Step 6) — `TimelinePoint.recordedAt` is a raw Prisma `Date` too.
+
 Create `src/features/users/graphql/resolvers.ts`:
 ```ts
 import { GraphQLContext, requireUser } from '@/lib/graphql/context';
 import { getUserTimeline, getUserScoreBreakdown } from '../service';
 
 export const resolvers = {
+  TimelinePoint: {
+    recordedAt: (parent: { recordedAt: Date }) => parent.recordedAt.toISOString(),
+  },
   Query: {
     userDetail: async (_parent: unknown, args: { userId: string }, context: GraphQLContext) => {
       requireUser(context);
@@ -4159,15 +4178,29 @@ Expected: all tests pass, no failures
 
 - [ ] **Step 11: Manual end-to-end smoke test**
 
-Run: `npm run dev`, then in a browser:
-1. Visit `/register`, create two accounts (one MALE, one FEMALE, different birthdates/goals).
-2. Log in as each, record a baseline measurement, then a second "improved" measurement.
-3. Visit `/leaderboard`, confirm both users appear, ranked, and gender filters work.
-4. Click a user's name, confirm the timeline chart and score breakdown render.
-5. Log in as the seeded admin (`Gabriel` / `changeme123`), visit `/admin`, add a handicap bracket and a condition, assign the condition to a user via `assignConditionToUser` (can be tested via the GraphQL endpoint directly with `curl` if no assignment UI row exists yet — this confirms the mutation works; a dedicated per-user assignment control can be added as a follow-up if desired).
-6. Confirm the leaderboard re-ranks after changing a metric weight.
+If you have a browser available, run `npm run dev` and walk through this in
+the UI. If you don't (e.g. a headless/CLI environment), drive the same flow
+with `curl` directly against `/api/register`, `/api/auth/csrf`,
+`/api/auth/callback/credentials`, and `/api/graphql` — NextAuth's Credentials
+sign-in is a plain CSRF-token-then-POST flow that works fine outside a
+browser: fetch `/api/auth/csrf` with a cookie jar, POST
+`displayName`/`password`/the returned `csrfToken`/`json=true` as form data to
+`/api/auth/callback/credentials` with the same cookie jar, then reuse that
+jar for authenticated GraphQL requests. Verify with `GET /api/auth/session`
+that the returned `user` object has the expected `id`/`isAdmin`.
 
-Stop the dev server once verified.
+1. Register two accounts (one MALE, one FEMALE, different birthdates/goals).
+2. Log in as each, record a baseline measurement, then a second "improved" measurement.
+3. Query the leaderboard, confirm both users appear, ranked, and that gender/age/per-metric filters work.
+4. Query a user's detail (`userDetail`), confirm the timeline and score breakdown are populated and `recordedAt` renders as a real ISO date string, not a raw millisecond number (see the Task 7/Task 11 resolver fix above — this is exactly the kind of thing that only surfaces once you run a real query end-to-end, not through service-layer unit tests).
+5. Log in as the seeded admin (`Gabriel` / `changeme123`), create a condition and a handicap bracket, then delete them again (or assign/unassign to a real user) to confirm the full admin mutation set works.
+6. Change a metric weight via `updateMetricConfig`, re-query the leaderboard, and confirm scores changed immediately (no caching) — then change it back.
+7. If you used real accounts that already contain a live user's own data (check `createdAt`/measurement values before assuming something is test data you created), don't touch it. Only delete records you created for this smoke test.
+
+Stop the dev server once verified, and confirm no `next dev`/`next-server`
+process is left running afterward — check for it explicitly rather than
+assuming your stop command worked, since a leaked process holds its port for
+the rest of the session.
 
 - [ ] **Step 12: Commit**
 
