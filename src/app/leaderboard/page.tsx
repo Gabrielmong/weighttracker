@@ -6,6 +6,7 @@ import { useQuery } from '@apollo/client/react';
 import { Container, Typography, CircularProgress, Button, Alert } from '@mui/material';
 import Link from 'next/link';
 import { LeaderboardTable, LeaderboardRowData } from '@/features/leaderboard/components/LeaderboardTable';
+import { LeaderboardChart } from '@/features/leaderboard/components/LeaderboardChart';
 import { LeaderboardFilters, LeaderboardFilterState, ageBracketToRange } from '@/features/leaderboard/components/LeaderboardFilters';
 
 interface LeaderboardQueryData {
@@ -58,11 +59,18 @@ export default function LeaderboardPage() {
           data?.leaderboard.length === 0 ? (
             <Typography color="text.secondary">No one has recorded a follow-up measurement yet.</Typography>
           ) : (
-            <LeaderboardTable
-              rows={data?.leaderboard ?? []}
-              scoreType={filters.scoreType}
-              isPerMetric={filters.metricKey !== 'COMBINED'}
-            />
+            <>
+              <LeaderboardChart
+                rows={data?.leaderboard ?? []}
+                scoreType={filters.scoreType}
+                isPerMetric={filters.metricKey !== 'COMBINED'}
+              />
+              <LeaderboardTable
+                rows={data?.leaderboard ?? []}
+                scoreType={filters.scoreType}
+                isPerMetric={filters.metricKey !== 'COMBINED'}
+              />
+            </>
           )
         )
       )}

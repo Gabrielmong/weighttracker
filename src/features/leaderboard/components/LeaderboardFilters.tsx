@@ -1,19 +1,11 @@
 import { ToggleButtonGroup, ToggleButton, Stack, TextField, MenuItem } from '@mui/material';
+import { METRIC_LABELS } from '@/features/scoring/metricLabels';
 
 export type AgeBracketOption = 'ALL' | '0-29' | '30-44' | '45-120';
 
 export const METRIC_FILTER_OPTIONS: Array<{ value: string; label: string }> = [
   { value: 'COMBINED', label: 'Combined Score' },
-  { value: 'WEIGHT', label: 'Weight' },
-  { value: 'BMI', label: 'BMI' },
-  { value: 'BODY_FAT_PCT', label: 'Body Fat %' },
-  { value: 'SUBCUTANEOUS_FAT_PCT', label: 'Subcutaneous Fat %' },
-  { value: 'VISCERAL_FAT_RATING', label: 'Visceral Fat Rating' },
-  { value: 'SKELETAL_MUSCLE_PCT', label: 'Skeletal Muscle %' },
-  { value: 'MUSCLE_MASS_KG', label: 'Muscle Mass' },
-  { value: 'PROTEIN_PCT', label: 'Protein %' },
-  { value: 'BMR', label: 'BMR' },
-  { value: 'METABOLIC_AGE', label: 'Metabolic Age' },
+  ...Object.entries(METRIC_LABELS).map(([value, label]) => ({ value, label })),
 ];
 
 export interface LeaderboardFilterState {

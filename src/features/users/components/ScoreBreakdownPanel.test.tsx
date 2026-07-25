@@ -15,7 +15,7 @@ describe('ScoreBreakdownPanel', () => {
         }}
       />
     );
-    expect(screen.getByText('BODY_FAT_PCT')).toBeInTheDocument();
+    expect(screen.getByText('Body Fat %')).toBeInTheDocument();
     expect(screen.getByText(/34.65/)).toBeInTheDocument();
   });
 });
