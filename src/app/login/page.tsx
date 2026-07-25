@@ -1,5 +1,7 @@
-import { Container, Typography } from '@mui/material';
-import Link from 'next/link';
+'use client';
+
+import { Container, Typography, Link } from '@mui/material';
+import NextLink from 'next/link';
 import { LoginForm } from '@/features/auth/components/LoginForm';
 
 export default function LoginPage() {
@@ -8,7 +10,8 @@ export default function LoginPage() {
       <Typography variant="h4" gutterBottom>Log in</Typography>
       <LoginForm />
       <Typography sx={{ mt: 2 }}>
-        Don&apos;t have an account? <Link href="/register">Sign up</Link>
+        Don&apos;t have an account?{' '}
+        <Link component={NextLink} href="/register" color="primary" underline="hover">Sign up</Link>
       </Typography>
     </Container>
   );

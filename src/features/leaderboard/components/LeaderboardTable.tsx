@@ -1,5 +1,5 @@
-import { Table, TableHead, TableRow, TableCell, TableBody, Paper } from '@mui/material';
-import Link from 'next/link';
+import { Table, TableHead, TableRow, TableCell, TableBody, Paper, Link } from '@mui/material';
+import NextLink from 'next/link';
 
 export interface LeaderboardRowData {
   userId: string;
@@ -34,7 +34,9 @@ export function LeaderboardTable({
             <TableRow key={row.userId}>
               <TableCell>{row.rank}</TableCell>
               <TableCell>
-                <Link href={`/users/${row.userId}`}>{row.displayName}</Link>
+                <Link component={NextLink} href={`/users/${row.userId}`} color="primary" underline="hover">
+                  {row.displayName}
+                </Link>
               </TableCell>
               <TableCell align="right">
                 {isPerMetric
