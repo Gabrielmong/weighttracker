@@ -1583,6 +1583,7 @@ git commit -m "Add NextAuth credentials auth, registration flow, and route prote
 - Create: `src/lib/graphql/context.ts`
 - Create: `src/lib/graphql/schema.ts`
 - Create: `src/app/api/graphql/route.ts`
+- Create: `scripts/generate-schema-sdl.ts` (works around a Windows codegen loader bug — see Step 4)
 - Create: `codegen.yml`
 - Create: `src/lib/apolloClient.ts`
 - Create: `src/features/scoring/graphql/typeDefs.ts` (root placeholder types, extended by later tasks)
@@ -1593,14 +1594,19 @@ git commit -m "Add NextAuth credentials auth, registration flow, and route prote
 
 - [ ] **Step 1: Define the GraphQL context**
 
+Use the `Session` type imported directly from `next-auth` rather than
+`Awaited<ReturnType<typeof getServerSession>>` — with this next-auth version
+that inferred type resolves to `{}` due to `getServerSession`'s overloads,
+which fails to type-check `context.session?.user` later in this file.
+
 Create `src/lib/graphql/context.ts`:
 ```ts
-import { getServerSession } from 'next-auth';
+import { getServerSession, Session } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 
 export interface GraphQLContext {
-  session: Awaited<ReturnType<typeof getServerSession>>;
+  session: Session | null;
   prisma: typeof prisma;
 }
 
@@ -1655,8 +1661,19 @@ export const schema = makeExecutableSchema({
 
 - [ ] **Step 3: Wire up the Apollo Server route handler**
 
+`@as-integrations/next`'s `startServerAndCreateNextHandler` returns a function
+with an *overloaded* type (one overload for the old Pages API `(req, res)`
+shape, one for the App Router `(req)` shape). Next.js 16's route-handler type
+validator (`.next/types/validator.ts`) requires an exported `GET`/`POST` whose
+type is a plain `(request: NextRequest, context: {...}) => Response |
+Promise<Response>` — an overloaded union doesn't structurally match, so
+exporting the handler directly fails `next build`'s type check. Wrap it in a
+plain async function with an explicit `NextRequest` parameter instead; this
+doesn't change runtime behavior, only the exported type shape.
+
 Create `src/app/api/graphql/route.ts`:
 ```ts
+import { NextRequest } from 'next/server';
 import { ApolloServer } from '@apollo/server';
 import { startServerAndCreateNextHandler } from '@as-integrations/next';
 import { schema } from '@/lib/graphql/schema';
@@ -1664,19 +1681,48 @@ import { createContext, GraphQLContext } from '@/lib/graphql/context';
 
 const server = new ApolloServer<GraphQLContext>({ schema });
 
-const handler = startServerAndCreateNextHandler(server, {
+const handler = startServerAndCreateNextHandler<NextRequest, GraphQLContext>(server, {
   context: createContext,
 });
 
-export { handler as GET, handler as POST };
+export async function GET(request: NextRequest) {
+  return handler(request);
+}
+
+export async function POST(request: NextRequest) {
+  return handler(request);
+}
 ```
 
 - [ ] **Step 4: Configure codegen**
 
-Create `codegen.yml`:
+`graphql-code-generator`'s `code-file-loader` tries to `import()` the
+`schema:` path directly when it's a `.ts` file. On Windows this fails with
+`ERR_UNSUPPORTED_ESM_URL_SCHEME` because the loader passes a raw `C:\...`
+path to Node's ESM loader instead of a `file://` URL — Node's dynamic
+`import()` requires a proper URL scheme, and Windows absolute paths aren't one.
+Work around this by pre-rendering the schema to a plain `.graphql` SDL file
+with a small script (which loads the module through Node's normal `import`
+inside a running process — that path works fine) and pointing codegen at the
+SDL file, which the loader reads as plain text instead of executing.
+
+Create `scripts/generate-schema-sdl.ts`:
+```ts
+import { writeFileSync } from 'fs';
+import { printSchema } from 'graphql';
+import { schema } from '../src/lib/graphql/schema';
+
+writeFileSync('schema.graphql', printSchema(schema));
+console.log('Wrote schema.graphql');
+```
+
+Create `codegen.yml`. Note `ignoreNoDocuments: true` — at this point in the
+build no `*.graphql` operation documents exist yet (those start appearing in
+Task 8), and without this flag codegen hard-fails on an empty glob match:
 ```yaml
 overwrite: true
-schema: 'src/lib/graphql/schema.ts'
+ignoreNoDocuments: true
+schema: 'schema.graphql'
 generates:
   src/lib/graphql/generated/types.ts:
     plugins:
@@ -1690,19 +1736,28 @@ generates:
       - typed-document-node
 ```
 
-Add to `package.json` scripts:
+Add to `package.json` scripts (note the two-step chain — generate the SDL
+file first, then run codegen against it):
 ```json
 {
   "scripts": {
-    "codegen": "graphql-codegen --config codegen.yml"
+    "codegen": "tsx scripts/generate-schema-sdl.ts && graphql-codegen --config codegen.yml"
   }
 }
 ```
 
 Run: `npm run codegen`
-Expected: generates `src/lib/graphql/generated/types.ts` with a `Query`/`Mutation` type containing `_placeholder`. Add `src/lib/graphql/generated/` to `.gitignore` (regenerated at build time, not committed).
+Expected: generates `src/lib/graphql/generated/types.ts` with a `Query`/`Mutation` type containing `_placeholder`. Add `/schema.graphql` and `/src/lib/graphql/generated/` to `.gitignore` (both regenerated via `npm run codegen`, not committed).
 
 - [ ] **Step 5: Set up the Apollo Client for client components**
+
+Apollo Client v4 split React bindings (`ApolloProvider`, `useQuery`,
+`useMutation`, `MockedProvider`, ...) out of the main `@apollo/client` entry
+point into a `@apollo/client/react` subpath — importing `ApolloProvider` from
+`@apollo/client` itself fails with "export doesn't exist" under v4. Every
+React-facing Apollo import in this plan (here and in later UI tasks) uses the
+`/react` subpath; `ApolloClient`, `InMemoryCache`, and `HttpLink` stay on the
+main entry point since those are framework-agnostic core APIs.
 
 Create `src/lib/apolloClient.ts`:
 ```ts
@@ -1719,7 +1774,7 @@ Modify `src/app/providers.tsx` to also wrap children in `ApolloProvider`:
 'use client';
 
 import { SessionProvider } from 'next-auth/react';
-import { ApolloProvider } from '@apollo/client';
+import { ApolloProvider } from '@apollo/client/react';
 import { ReactNode } from 'react';
 import { apolloClient } from '@/lib/apolloClient';
 
@@ -1738,12 +1793,17 @@ Run: `npm run dev` (in background), then in another terminal:
 ```bash
 curl -s -X POST http://localhost:3000/api/graphql -H "Content-Type: application/json" -d "{\"query\":\"{ _placeholder }\"}"
 ```
-Expected: `{"data":{"_placeholder":true}}`. Stop the dev server.
+Expected: `{"data":{"_placeholder":true}}`. Note the actual port from the dev
+server's startup log before curling — Next.js silently falls back to 3001,
+3002, etc. if 3000 is already bound by another process (e.g. a dev server left
+running from an earlier session). Stop the dev server, and confirm no `next
+dev` process is still running in the background afterward — a leaked one will
+keep holding its port for the rest of the session.
 
 - [ ] **Step 7: Commit**
 
 ```bash
-git add src/lib/graphql src/app/api/graphql src/features/scoring/graphql src/lib/apolloClient.ts src/app/providers.tsx codegen.yml package.json .gitignore
+git add src/lib/graphql src/app/api/graphql src/features/scoring/graphql src/lib/apolloClient.ts src/app/providers.tsx scripts/generate-schema-sdl.ts codegen.yml package.json .gitignore
 git commit -m "Add GraphQL server infrastructure, context, and codegen config"
 ```
 
