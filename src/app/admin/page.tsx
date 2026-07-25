@@ -19,7 +19,13 @@ export default function AdminPage() {
   return (
     <Container maxWidth="md" sx={{ mt: 4 }}>
       <Typography variant="h4" gutterBottom>Admin</Typography>
-      <Tabs value={tab} onChange={(_e, value) => setTab(value)}>
+      <Tabs
+        value={tab}
+        onChange={(_e, value) => setTab(value)}
+        variant="scrollable"
+        scrollButtons="auto"
+        allowScrollButtonsMobile
+      >
         <Tab label="Metric Weights" />
         <Tab label="Handicap Brackets" />
         <Tab label="Conditions" />
