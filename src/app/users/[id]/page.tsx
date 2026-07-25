@@ -39,6 +39,8 @@ const USER_DETAIL_QUERY = gql`
         metricChanges {
           metricKey
           pctChange
+          weight
+          contribution
         }
       }
     }

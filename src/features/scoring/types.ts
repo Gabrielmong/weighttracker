@@ -41,6 +41,12 @@ export interface MetricPctChange {
   pctChange: number;
 }
 
+export interface ScoredMetricChange extends MetricPctChange {
+  weight: number;
+  /** pctChange * weight — this metric's contribution to the raw score. */
+  contribution: number;
+}
+
 export interface HandicapBracketInput {
   gender: Gender;
   minAge: number;
@@ -49,7 +55,7 @@ export interface HandicapBracketInput {
 }
 
 export interface ScoreBreakdown {
-  metricChanges: MetricPctChange[];
+  metricChanges: ScoredMetricChange[];
   rawScore: number;
   ageGenderMultiplier: number;
   conditionMultipliers: number[];

@@ -61,6 +61,12 @@ describe('computeScoreBreakdown', () => {
     expect(result.metricChanges).toHaveLength(2);
     expect(result.ageGenderMultiplier).toBe(1.2);
     expect(result.conditionMultipliers).toEqual([1.1]);
+
+    const bodyFat = result.metricChanges.find((c) => c.metricKey === 'BODY_FAT_PCT')!;
+    expect(bodyFat.weight).toBe(1.5);
+    expect(bodyFat.contribution).toBeCloseTo(bodyFat.pctChange * 1.5, 5);
+    const sumOfContributions = result.metricChanges.reduce((sum, c) => sum + c.contribution, 0);
+    expect(sumOfContributions).toBeCloseTo(result.rawScore, 5);
     expect(result.finalScore).toBeCloseTo(result.rawScore * 1.2 * 1.1, 5);
   });
 });

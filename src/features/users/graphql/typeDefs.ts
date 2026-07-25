@@ -2,6 +2,10 @@ export const typeDefs = `#graphql
   type MetricChange {
     metricKey: String!
     pctChange: Float!
+    """Only populated on ScoreBreakdown.metricChanges, not on TimelinePoint.metricChanges."""
+    weight: Float
+    """Only populated on ScoreBreakdown.metricChanges, not on TimelinePoint.metricChanges."""
+    contribution: Float
   }
 
   type TimelinePoint {

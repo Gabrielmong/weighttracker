@@ -7,6 +7,7 @@ import {
   MetricConfigInput,
   MetricPctChange,
   ScoreBreakdown,
+  ScoredMetricChange,
   WeightGoal,
 } from './types';
 
@@ -30,10 +31,16 @@ export function computeScoreBreakdown(params: {
   brackets: HandicapBracketInput[];
   conditionMultipliers: number[];
 }): ScoreBreakdown {
-  const metricChanges = computeMetricChanges(params.baseline, params.current, params.configs, params.weightGoal);
-  const rawScore = computeRawScore(metricChanges, params.configs);
+  const changes = computeMetricChanges(params.baseline, params.current, params.configs, params.weightGoal);
+  const rawScore = computeRawScore(changes, params.configs);
   const ageGenderMultiplier = findHandicapMultiplier(params.brackets, params.gender, params.age);
   const finalScore = computeFinalScore(rawScore, ageGenderMultiplier, params.conditionMultipliers);
+
+  const weightByKey = new Map(params.configs.map((c) => [c.metricKey, c.weight]));
+  const metricChanges: ScoredMetricChange[] = changes.map((change) => {
+    const weight = weightByKey.get(change.metricKey) ?? 0;
+    return { ...change, weight, contribution: change.pctChange * weight };
+  });
 
   return {
     metricChanges,
