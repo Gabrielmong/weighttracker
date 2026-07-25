@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { gql } from '@apollo/client';
 import { useQuery } from '@apollo/client/react';
-import { Container, Typography, CircularProgress, Button } from '@mui/material';
+import { Container, Typography, CircularProgress, Button, Alert } from '@mui/material';
 import Link from 'next/link';
 import { LeaderboardTable, LeaderboardRowData } from '@/features/leaderboard/components/LeaderboardTable';
 import { LeaderboardFilters, LeaderboardFilterState, ageBracketToRange } from '@/features/leaderboard/components/LeaderboardFilters';
@@ -33,7 +33,7 @@ export default function LeaderboardPage() {
     metricKey: 'COMBINED',
   });
   const { minAge, maxAge } = ageBracketToRange(filters.ageBracket);
-  const { data, loading } = useQuery<LeaderboardQueryData>(LEADERBOARD_QUERY, {
+  const { data, loading, error } = useQuery<LeaderboardQueryData>(LEADERBOARD_QUERY, {
     variables: {
       gender: filters.gender === 'ALL' ? null : filters.gender,
       scoreType: filters.scoreType,
@@ -50,14 +50,21 @@ export default function LeaderboardPage() {
         Record a Measurement
       </Button>
       <LeaderboardFilters value={filters} onChange={setFilters} />
+      {error && <Alert severity="error" sx={{ mb: 2 }}>Failed to load the leaderboard: {error.message}</Alert>}
       {loading ? (
         <CircularProgress />
       ) : (
-        <LeaderboardTable
-          rows={data?.leaderboard ?? []}
-          scoreType={filters.scoreType}
-          isPerMetric={filters.metricKey !== 'COMBINED'}
-        />
+        !error && (
+          data?.leaderboard.length === 0 ? (
+            <Typography color="text.secondary">No one has recorded a follow-up measurement yet.</Typography>
+          ) : (
+            <LeaderboardTable
+              rows={data?.leaderboard ?? []}
+              scoreType={filters.scoreType}
+              isPerMetric={filters.metricKey !== 'COMBINED'}
+            />
+          )
+        )
       )}
     </Container>
   );

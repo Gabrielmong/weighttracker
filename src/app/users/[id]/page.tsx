@@ -3,7 +3,7 @@
 import { gql } from '@apollo/client';
 import { useQuery } from '@apollo/client/react';
 import { useParams } from 'next/navigation';
-import { Container, Typography, CircularProgress, Stack } from '@mui/material';
+import { Container, Typography, CircularProgress, Stack, Alert } from '@mui/material';
 import { TimelineChart } from '@/features/users/components/TimelineChart';
 import { ScoreBreakdownPanel, ScoreBreakdown } from '@/features/users/components/ScoreBreakdownPanel';
 
@@ -47,9 +47,10 @@ const USER_DETAIL_QUERY = gql`
 
 export default function UserDetailPage() {
   const params = useParams<{ id: string }>();
-  const { data, loading } = useQuery<UserDetailQueryData>(USER_DETAIL_QUERY, { variables: { userId: params.id } });
+  const { data, loading, error } = useQuery<UserDetailQueryData>(USER_DETAIL_QUERY, { variables: { userId: params.id } });
 
   if (loading) return <CircularProgress />;
+  if (error) return <Alert severity="error">Failed to load this profile: {error.message}</Alert>;
   if (!data?.userDetail) return <Typography>User not found.</Typography>;
 
   const { displayName, timeline, scoreBreakdown } = data.userDetail;

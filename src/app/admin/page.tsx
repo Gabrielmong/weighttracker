@@ -6,6 +6,7 @@ import { Container, Typography, Tabs, Tab, Box } from '@mui/material';
 import { MetricConfigEditor } from '@/features/admin/components/MetricConfigEditor';
 import { HandicapBracketEditor } from '@/features/admin/components/HandicapBracketEditor';
 import { ConditionManager } from '@/features/admin/components/ConditionManager';
+import { ConditionAssignment } from '@/features/admin/components/ConditionAssignment';
 
 export default function AdminPage() {
   const { data: session } = useSession();
@@ -22,11 +23,13 @@ export default function AdminPage() {
         <Tab label="Metric Weights" />
         <Tab label="Handicap Brackets" />
         <Tab label="Conditions" />
+        <Tab label="Assign Conditions" />
       </Tabs>
       <Box sx={{ mt: 3 }}>
         {tab === 0 && <MetricConfigEditor />}
         {tab === 1 && <HandicapBracketEditor />}
         {tab === 2 && <ConditionManager />}
+        {tab === 3 && <ConditionAssignment />}
       </Box>
     </Container>
   );

@@ -46,9 +46,24 @@ export const typeDefs = `#graphql
     multiplier: Float!
   }
 
+  type UserSummary {
+    id: ID!
+    displayName: String!
+  }
+
+  type MetricConfigType {
+    metricKey: String!
+    weight: Float!
+    directionType: DirectionType!
+    fixedDirection: FixedDirection
+  }
+
   extend type Query {
     conditions: [Condition!]!
     handicapBrackets: [HandicapBracketType!]!
+    metricConfigs: [MetricConfigType!]!
+    users: [UserSummary!]!
+    userConditionIds(userId: ID!): [ID!]!
   }
 
   extend type Mutation {

@@ -11,6 +11,19 @@ export const resolvers = {
       requireAdmin(context);
       return context.prisma.handicapBracket.findMany();
     },
+    metricConfigs: async (_p: unknown, _a: unknown, context: GraphQLContext) => {
+      requireAdmin(context);
+      return context.prisma.metricConfig.findMany({ where: { challengeId: null } });
+    },
+    users: async (_p: unknown, _a: unknown, context: GraphQLContext) => {
+      requireAdmin(context);
+      return context.prisma.user.findMany({ orderBy: { displayName: 'asc' } });
+    },
+    userConditionIds: async (_p: unknown, args: { userId: string }, context: GraphQLContext) => {
+      requireAdmin(context);
+      const links = await context.prisma.userCondition.findMany({ where: { userId: args.userId } });
+      return links.map((link) => link.conditionId);
+    },
   },
   Mutation: {
     updateMetricConfig: async (_p: unknown, args: { input: any }, context: GraphQLContext) => {
