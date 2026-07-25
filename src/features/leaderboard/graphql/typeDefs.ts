@@ -9,6 +9,11 @@ export const typeDefs = `#graphql
     FINAL
   }
 
+  type LeaderboardTimelinePoint {
+    recordedAt: String!
+    value: Float!
+  }
+
   type LeaderboardRow {
     userId: ID!
     displayName: String!
@@ -16,6 +21,7 @@ export const typeDefs = `#graphql
     rawScore: Float!
     finalScore: Float!
     metricPctChange: Float
+    timeline: [LeaderboardTimelinePoint!]!
   }
 
   extend type Query {

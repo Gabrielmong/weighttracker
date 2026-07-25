@@ -1,6 +1,11 @@
 import { Table, TableHead, TableRow, TableCell, TableBody, Paper, Link } from '@mui/material';
 import NextLink from 'next/link';
 
+export interface LeaderboardTimelinePoint {
+  recordedAt: string;
+  value: number;
+}
+
 export interface LeaderboardRowData {
   userId: string;
   displayName: string;
@@ -8,6 +13,7 @@ export interface LeaderboardRowData {
   rawScore: number;
   finalScore: number;
   metricPctChange?: number;
+  timeline: LeaderboardTimelinePoint[];
 }
 
 export function LeaderboardTable({

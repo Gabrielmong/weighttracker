@@ -22,6 +22,10 @@ const LEADERBOARD_QUERY = gql`
       rawScore
       finalScore
       metricPctChange
+      timeline {
+        recordedAt
+        value
+      }
     }
   }
 `;
@@ -62,7 +66,6 @@ export default function LeaderboardPage() {
             <>
               <LeaderboardChart
                 rows={data?.leaderboard ?? []}
-                scoreType={filters.scoreType}
                 isPerMetric={filters.metricKey !== 'COMBINED'}
               />
               <LeaderboardTable

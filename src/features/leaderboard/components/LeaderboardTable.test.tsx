@@ -7,8 +7,8 @@ describe('LeaderboardTable', () => {
     render(
       <LeaderboardTable
         rows={[
-          { userId: '1', displayName: 'Alice', rank: 1, rawScore: 30, finalScore: 33 },
-          { userId: '2', displayName: 'Bob', rank: 2, rawScore: 20, finalScore: 20 },
+          { userId: '1', displayName: 'Alice', rank: 1, rawScore: 30, finalScore: 33, timeline: [] },
+          { userId: '2', displayName: 'Bob', rank: 2, rawScore: 20, finalScore: 20, timeline: [] },
         ]}
         scoreType="FINAL"
         isPerMetric={false}

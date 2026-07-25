@@ -1,7 +1,7 @@
 import { prisma } from '@/lib/prisma';
 import { computeScoreBreakdown, calculateAge } from '@/features/scoring/score';
 import { computeMetricChanges } from '@/features/scoring/metricChanges';
-import { Gender, MetricKey } from '@/features/scoring/types';
+import { Gender, MeasurementSnapshot, MetricConfigInput, MetricKey, WeightGoal } from '@/features/scoring/types';
 
 export interface LeaderboardFilters {
   gender?: Gender;
@@ -12,6 +12,11 @@ export interface LeaderboardFilters {
   metricKey?: MetricKey;
 }
 
+export interface LeaderboardTimelinePoint {
+  recordedAt: string;
+  value: number;
+}
+
 export interface LeaderboardRow {
   userId: string;
   displayName: string;
@@ -20,6 +25,43 @@ export interface LeaderboardRow {
   finalScore: number;
   /** Present only when filters.metricKey is set. */
   metricPctChange?: number;
+  /** One point per non-baseline snapshot, in the same value terms as rawScore/finalScore/metricPctChange above. */
+  timeline: LeaderboardTimelinePoint[];
+}
+
+interface SnapshotWithDate extends MeasurementSnapshot {
+  recordedAt: Date;
+}
+
+function computeSnapshotValue(params: {
+  baseline: MeasurementSnapshot;
+  snapshot: SnapshotWithDate;
+  configInputs: MetricConfigInput[];
+  weightGoal: WeightGoal;
+  gender: Gender;
+  age: number;
+  brackets: Parameters<typeof computeScoreBreakdown>[0]['brackets'];
+  conditionMultipliers: number[];
+  metricKey?: MetricKey;
+  scoreType?: 'RAW' | 'FINAL';
+}): number | null {
+  if (params.metricKey) {
+    const changes = computeMetricChanges(params.baseline, params.snapshot, params.configInputs, params.weightGoal);
+    const change = changes.find((c) => c.metricKey === params.metricKey);
+    return change ? change.pctChange : null;
+  }
+
+  const breakdown = computeScoreBreakdown({
+    baseline: params.baseline,
+    current: params.snapshot,
+    configs: params.configInputs,
+    weightGoal: params.weightGoal,
+    gender: params.gender,
+    age: params.age,
+    brackets: params.brackets,
+    conditionMultipliers: params.conditionMultipliers,
+  });
+  return params.scoreType === 'RAW' ? breakdown.rawScore : breakdown.finalScore;
 }
 
 export async function getLeaderboard(filters: LeaderboardFilters, asOf: Date = new Date()): Promise<LeaderboardRow[]> {
@@ -58,15 +100,38 @@ export async function getLeaderboard(filters: LeaderboardFilters, asOf: Date = n
     if (filters.maxAge != null && age > filters.maxAge) continue;
 
     const baseline = user.measurements.find((m) => m.isBaseline);
-    const latest = user.measurements
+    const nonBaseline = user.measurements
       .filter((m) => !m.isBaseline)
-      .sort((a, b) => b.recordedAt.getTime() - a.recordedAt.getTime())[0];
+      .sort((a, b) => a.recordedAt.getTime() - b.recordedAt.getTime());
+    const latest = nonBaseline[nonBaseline.length - 1];
     if (!baseline || !latest) continue;
+
+    const conditionMultipliers = user.conditions.map((uc) => uc.condition.multiplier);
+
+    const timeline: LeaderboardTimelinePoint[] = [];
+    for (const snapshot of nonBaseline) {
+      const value = computeSnapshotValue({
+        baseline,
+        snapshot,
+        configInputs,
+        weightGoal: user.weightGoal,
+        gender: user.gender,
+        age,
+        brackets,
+        conditionMultipliers,
+        metricKey: filters.metricKey,
+        scoreType: filters.scoreType,
+      });
+      if (value !== null) {
+        timeline.push({ recordedAt: snapshot.recordedAt.toISOString(), value });
+      }
+    }
 
     if (filters.metricKey) {
       // Per-metric leaderboard: single metric, unhandicapped, per spec §7.
-      const changes = computeMetricChanges(baseline, latest, configInputs, user.weightGoal);
-      const change = changes.find((c) => c.metricKey === filters.metricKey);
+      const change = computeMetricChanges(baseline, latest, configInputs, user.weightGoal).find(
+        (c) => c.metricKey === filters.metricKey
+      );
       if (!change) continue;
       rows.push({
         userId: user.id,
@@ -75,6 +140,7 @@ export async function getLeaderboard(filters: LeaderboardFilters, asOf: Date = n
         rawScore: change.pctChange,
         finalScore: change.pctChange,
         metricPctChange: change.pctChange,
+        timeline,
       });
       continue;
     }
@@ -87,7 +153,7 @@ export async function getLeaderboard(filters: LeaderboardFilters, asOf: Date = n
       gender: user.gender,
       age,
       brackets,
-      conditionMultipliers: user.conditions.map((uc) => uc.condition.multiplier),
+      conditionMultipliers,
     });
 
     rows.push({
@@ -96,6 +162,7 @@ export async function getLeaderboard(filters: LeaderboardFilters, asOf: Date = n
       rank: 0,
       rawScore: breakdown.rawScore,
       finalScore: breakdown.finalScore,
+      timeline,
     });
   }
 
