@@ -2047,11 +2047,15 @@ mutation RecordMeasurement($input: RecordMeasurementInput!) {
 
 - [ ] **Step 2: Write a failing test for the form**
 
+`MockedProvider` is a React-specific testing helper, so under Apollo Client
+v4's core/react split (see Task 6) it lives at `@apollo/client/testing/react`,
+not `@apollo/client/testing`.
+
 Create `src/features/measurements/components/MeasurementForm.test.tsx`:
 ```tsx
 import { describe, it, expect, vi } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
-import { MockedProvider } from '@apollo/client/testing';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { MockedProvider } from '@apollo/client/testing/react';
 import { MeasurementForm, RECORD_MEASUREMENT } from './MeasurementForm';
 
 describe('MeasurementForm', () => {
@@ -2106,8 +2110,11 @@ describe('MeasurementForm', () => {
     fireEvent.change(screen.getByLabelText(/muscle mass/i), { target: { value: '29' } });
     fireEvent.click(screen.getByRole('button', { name: /save/i }));
 
-    await new Promise((resolve) => setTimeout(resolve, 0));
-    expect(onSaved).toHaveBeenCalled();
+    // A bare `setTimeout(resolve, 0)` is flaky here — MockedProvider resolves
+    // its mocked response and triggers the component's state update on a
+    // microtask schedule that isn't guaranteed to have flushed after one
+    // macrotask tick. `waitFor` polls until the assertion passes instead.
+    await waitFor(() => expect(onSaved).toHaveBeenCalled());
   });
 });
 ```
@@ -2119,12 +2126,17 @@ Expected: FAIL — `Cannot find module './MeasurementForm'`
 
 - [ ] **Step 4: Implement the form**
 
+`gql` stays on the main `@apollo/client` entry point (it's re-exported from
+`graphql-tag`, not React-specific), but `useMutation` moved to
+`@apollo/client/react` — same core/react split as `MockedProvider` above.
+
 Create `src/features/measurements/components/MeasurementForm.tsx`:
 ```tsx
 'use client';
 
 import { useState } from 'react';
-import { gql, useMutation } from '@apollo/client';
+import { gql } from '@apollo/client';
+import { useMutation } from '@apollo/client/react';
 import { Box, TextField, Button, Stack, Collapse, Link } from '@mui/material';
 
 export const RECORD_MEASUREMENT = gql`
@@ -2794,7 +2806,8 @@ Create `src/app/leaderboard/page.tsx`:
 'use client';
 
 import { useState } from 'react';
-import { gql, useQuery } from '@apollo/client';
+import { gql } from '@apollo/client';
+import { useQuery } from '@apollo/client/react';
 import { Container, Typography, CircularProgress, Button } from '@mui/material';
 import Link from 'next/link';
 import { LeaderboardTable } from '@/features/leaderboard/components/LeaderboardTable';
@@ -3270,7 +3283,8 @@ Create `src/app/users/[id]/page.tsx`:
 ```tsx
 'use client';
 
-import { gql, useQuery } from '@apollo/client';
+import { gql } from '@apollo/client';
+import { useQuery } from '@apollo/client/react';
 import { useParams } from 'next/navigation';
 import { Container, Typography, CircularProgress, Stack } from '@mui/material';
 import { TimelineChart } from '@/features/users/components/TimelineChart';
@@ -3721,7 +3735,8 @@ Create `src/features/admin/components/ConditionManager.tsx`:
 'use client';
 
 import { useState } from 'react';
-import { gql, useQuery, useMutation } from '@apollo/client';
+import { gql } from '@apollo/client';
+import { useQuery, useMutation } from '@apollo/client/react';
 import { List, ListItem, ListItemText, TextField, Button, Stack, Typography } from '@mui/material';
 
 export const CONDITIONS_QUERY = gql`
@@ -3794,7 +3809,8 @@ Create `src/features/admin/components/MetricConfigEditor.tsx`:
 'use client';
 
 import { useState } from 'react';
-import { gql, useMutation } from '@apollo/client';
+import { gql } from '@apollo/client';
+import { useMutation } from '@apollo/client/react';
 import { TextField, Button, Stack, Typography, MenuItem } from '@mui/material';
 
 const UPDATE_METRIC_CONFIG = gql`
@@ -3858,7 +3874,8 @@ Create `src/features/admin/components/HandicapBracketEditor.tsx`:
 ```tsx
 'use client';
 
-import { gql, useQuery, useMutation } from '@apollo/client';
+import { gql } from '@apollo/client';
+import { useQuery, useMutation } from '@apollo/client/react';
 import { useState } from 'react';
 import { List, ListItem, ListItemText, TextField, Button, Stack, Typography, MenuItem } from '@mui/material';
 

@@ -1,0 +1,7 @@
+mutation RecordMeasurement($input: RecordMeasurementInput!) {
+  recordMeasurement(input: $input) {
+    id
+    recordedAt
+    isBaseline
+  }
+}
