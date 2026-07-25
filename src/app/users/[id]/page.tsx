@@ -5,7 +5,7 @@ import { gql } from '@apollo/client';
 import { useQuery } from '@apollo/client/react';
 import { useParams } from 'next/navigation';
 import { useSession } from 'next-auth/react';
-import { Container, Typography, CircularProgress, Stack, Alert, TextField, MenuItem } from '@mui/material';
+import { Container, Typography, CircularProgress, Stack, Box, Alert, TextField, MenuItem } from '@mui/material';
 import { TimelineChart } from '@/features/users/components/TimelineChart';
 import { ScoreBreakdownPanel, ScoreBreakdown } from '@/features/users/components/ScoreBreakdownPanel';
 import { MeasurementsTable, MeasurementRow } from '@/features/measurements/components/MeasurementsTable';
@@ -93,32 +93,44 @@ export default function UserDetailPage() {
   const { displayName, timeline, scoreBreakdown } = data.userDetail;
 
   return (
-    <Container maxWidth="md" sx={{ mt: 4 }}>
+    <Container maxWidth="lg" sx={{ mt: 4 }}>
       <Typography variant="h4" gutterBottom>{displayName}</Typography>
-      <Stack spacing={3}>
-        {scoreBreakdown && <ScoreBreakdownPanel breakdown={scoreBreakdown} />}
 
-        <TextField
-          select
-          label="Chart Field"
-          size="small"
-          value={metricKey}
-          onChange={(e) => setMetricKey(e.target.value as MetricKey)}
-          sx={{ width: { xs: '100%', sm: 220 } }}
-        >
-          {Object.entries(METRIC_LABELS).map(([key, label]) => (
-            <MenuItem key={key} value={key}>{label}</MenuItem>
-          ))}
-        </TextField>
-        <TimelineChart timeline={timeline} metricKey={metricKey} />
+      <Box
+        sx={{
+          display: 'grid',
+          gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' },
+          gap: 3,
+          alignItems: 'start',
+        }}
+      >
+        <Box>
+          {scoreBreakdown && <ScoreBreakdownPanel breakdown={scoreBreakdown} />}
+        </Box>
 
-        {isOwnProfile && (
-          <>
-            <Typography variant="h6">Your Measurements</Typography>
-            <MeasurementsTable measurements={myMeasurementsData?.myMeasurements ?? []} />
-          </>
-        )}
-      </Stack>
+        <Stack spacing={2}>
+          <TextField
+            select
+            label="Chart Field"
+            size="small"
+            value={metricKey}
+            onChange={(e) => setMetricKey(e.target.value as MetricKey)}
+            sx={{ width: { xs: '100%', sm: 220 } }}
+          >
+            {Object.entries(METRIC_LABELS).map(([key, label]) => (
+              <MenuItem key={key} value={key}>{label}</MenuItem>
+            ))}
+          </TextField>
+          <TimelineChart timeline={timeline} metricKey={metricKey} />
+        </Stack>
+      </Box>
+
+      {isOwnProfile && (
+        <Box sx={{ mt: 3 }}>
+          <Typography variant="h6" gutterBottom>Your Measurements</Typography>
+          <MeasurementsTable measurements={myMeasurementsData?.myMeasurements ?? []} />
+        </Box>
+      )}
     </Container>
   );
 }
