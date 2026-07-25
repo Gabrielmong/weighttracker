@@ -14,7 +14,7 @@ import { MetricKey } from '@/features/scoring/types';
 
 interface TimelinePoint {
   recordedAt: string;
-  metricChanges: { metricKey: string; pctChange: number }[];
+  metricChanges: { metricKey: string; pctChange: number; rawValue: number | null }[];
 }
 
 interface UserDetailQueryData {
@@ -38,6 +38,7 @@ const USER_DETAIL_QUERY = gql`
         metricChanges {
           metricKey
           pctChange
+          rawValue
         }
       }
       scoreBreakdown {

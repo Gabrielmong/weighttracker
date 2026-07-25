@@ -6,6 +6,8 @@ export const typeDefs = `#graphql
     weight: Float
     """Only populated on ScoreBreakdown.metricChanges, not on TimelinePoint.metricChanges."""
     contribution: Float
+    """Only populated on TimelinePoint.metricChanges — the metric's actual measured value at this snapshot."""
+    rawValue: Float
   }
 
   type TimelinePoint {

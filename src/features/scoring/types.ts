@@ -47,6 +47,11 @@ export interface ScoredMetricChange extends MetricPctChange {
   contribution: number;
 }
 
+export interface TimelineMetricPoint extends MetricPctChange {
+  /** The metric's actual measured value at this snapshot (e.g. 85 kg), alongside its % change from baseline. */
+  rawValue: number | null;
+}
+
 export interface HandicapBracketInput {
   gender: Gender;
   minAge: number;
