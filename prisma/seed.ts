@@ -28,9 +28,12 @@ async function main() {
     { metricKey: 'VISCERAL_FAT_RATING', weight: 1.0, directionType: 'FIXED', fixedDirection: 'DOWN' },
     { metricKey: 'SKELETAL_MUSCLE_PCT', weight: 1.2, directionType: 'FIXED', fixedDirection: 'UP' },
     { metricKey: 'MUSCLE_MASS_KG', weight: 1.2, directionType: 'FIXED', fixedDirection: 'UP' },
-    { metricKey: 'PROTEIN_PCT', weight: 0.5, directionType: 'FIXED', fixedDirection: 'UP' },
-    { metricKey: 'BMR', weight: 0.5, directionType: 'FIXED', fixedDirection: 'UP' },
-    { metricKey: 'METABOLIC_AGE', weight: 0.5, directionType: 'FIXED', fixedDirection: 'DOWN' },
+    // Optional fields (only entered by users who have the equipment to measure
+    // them) don't count toward the score — weight 0 means their contribution
+    // is always zero, whether or not a user fills them in.
+    { metricKey: 'PROTEIN_PCT', weight: 0, directionType: 'FIXED', fixedDirection: 'UP' },
+    { metricKey: 'BMR', weight: 0, directionType: 'FIXED', fixedDirection: 'UP' },
+    { metricKey: 'METABOLIC_AGE', weight: 0, directionType: 'FIXED', fixedDirection: 'DOWN' },
   ];
 
   for (const metric of defaultMetrics) {
