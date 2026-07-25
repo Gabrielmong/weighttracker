@@ -89,7 +89,7 @@ describe('getLeaderboard', () => {
     (prisma.user.findMany as any).mockResolvedValue([threeSnapshots]);
     const rows = await getLeaderboard({});
     expect(rows[0].timeline).toHaveLength(3);
-    expect(rows[0].timeline[0]).toEqual({ recordedAt: new Date('2026-01-01').toISOString(), value: 0 });
+    expect(rows[0].timeline[0]).toEqual({ recordedAt: new Date('2026-01-01').toISOString(), value: 0, rawValue: null });
     expect(rows[0].timeline[1].recordedAt).toBe(new Date('2026-02-01').toISOString());
     expect(rows[0].timeline[2].recordedAt).toBe(new Date('2026-03-01').toISOString());
     expect(rows[0].timeline[2].value).toBeCloseTo(rows[0].finalScore, 5);
@@ -113,6 +113,21 @@ describe('getLeaderboard', () => {
     const rows = await getLeaderboard({ metricKey: 'BODY_FAT_PCT' });
     expect(rows[0].timeline).toHaveLength(2);
     expect(rows[0].timeline[1].value).toBeCloseTo(rows[0].metricPctChange!, 5);
+  });
+
+  it('reports the raw metric value alongside pctChange in the timeline, and on the row itself, when metricKey is set', async () => {
+    (prisma.user.findMany as any).mockResolvedValue([baseUser]);
+    const rows = await getLeaderboard({ metricKey: 'BODY_FAT_PCT' });
+    expect(rows[0].timeline[0].rawValue).toBe(25); // baseline bodyFatPct
+    expect(rows[0].timeline[1].rawValue).toBe(20); // latest bodyFatPct
+    expect(rows[0].metricRawValue).toBe(20);
+  });
+
+  it('leaves rawValue null in the timeline when no metricKey is set (combined score mode)', async () => {
+    (prisma.user.findMany as any).mockResolvedValue([baseUser]);
+    const rows = await getLeaderboard({});
+    expect(rows[0].timeline[0].rawValue).toBeNull();
+    expect(rows[0].timeline[1].rawValue).toBeNull();
   });
 
   it('ranks by a single metric, unhandicapped, when metricKey is provided', async () => {

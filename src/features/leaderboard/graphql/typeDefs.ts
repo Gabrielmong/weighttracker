@@ -12,6 +12,8 @@ export const typeDefs = `#graphql
   type LeaderboardTimelinePoint {
     recordedAt: String!
     value: Float!
+    """Only populated when metricKey is set — the metric's actual measured value at this point in time."""
+    rawValue: Float
   }
 
   type LeaderboardRow {
@@ -21,6 +23,8 @@ export const typeDefs = `#graphql
     rawScore: Float!
     finalScore: Float!
     metricPctChange: Float
+    """Only populated when metricKey is set — the metric's actual latest measured value."""
+    metricRawValue: Float
     timeline: [LeaderboardTimelinePoint!]!
   }
 

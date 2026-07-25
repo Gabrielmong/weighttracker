@@ -1,6 +1,7 @@
 import { prisma } from '@/lib/prisma';
 import { computeScoreBreakdown, calculateAge } from '@/features/scoring/score';
 import { computeMetricChanges } from '@/features/scoring/metricChanges';
+import { getMetricValue } from '@/features/scoring/metricValues';
 import { Gender, MeasurementSnapshot, MetricConfigInput, MetricKey, WeightGoal } from '@/features/scoring/types';
 
 export interface LeaderboardFilters {
@@ -15,6 +16,8 @@ export interface LeaderboardFilters {
 export interface LeaderboardTimelinePoint {
   recordedAt: string;
   value: number;
+  /** Populated only when filters.metricKey is set — the metric's actual measured value at this point in time. */
+  rawValue?: number | null;
 }
 
 export interface LeaderboardRow {
@@ -25,6 +28,8 @@ export interface LeaderboardRow {
   finalScore: number;
   /** Present only when filters.metricKey is set. */
   metricPctChange?: number;
+  /** Present only when filters.metricKey is set — the metric's actual latest measured value. */
+  metricRawValue?: number | null;
   /** One point per non-baseline snapshot, in the same value terms as rawScore/finalScore/metricPctChange above. */
   timeline: LeaderboardTimelinePoint[];
 }
@@ -112,7 +117,13 @@ export async function getLeaderboard(filters: LeaderboardFilters, asOf: Date = n
     // definition, since nothing has changed relative to itself yet). Without
     // this, a user with only one follow-up measurement has a single-point
     // "timeline" that can't render as a line at all.
-    const timeline: LeaderboardTimelinePoint[] = [{ recordedAt: baseline.recordedAt.toISOString(), value: 0 }];
+    const timeline: LeaderboardTimelinePoint[] = [
+      {
+        recordedAt: baseline.recordedAt.toISOString(),
+        value: 0,
+        rawValue: filters.metricKey ? getMetricValue(baseline, filters.metricKey) : null,
+      },
+    ];
     for (const snapshot of nonBaseline) {
       const value = computeSnapshotValue({
         baseline,
@@ -127,7 +138,11 @@ export async function getLeaderboard(filters: LeaderboardFilters, asOf: Date = n
         scoreType: filters.scoreType,
       });
       if (value !== null) {
-        timeline.push({ recordedAt: snapshot.recordedAt.toISOString(), value });
+        timeline.push({
+          recordedAt: snapshot.recordedAt.toISOString(),
+          value,
+          rawValue: filters.metricKey ? getMetricValue(snapshot, filters.metricKey) : null,
+        });
       }
     }
 
@@ -144,6 +159,7 @@ export async function getLeaderboard(filters: LeaderboardFilters, asOf: Date = n
         rawScore: change.pctChange,
         finalScore: change.pctChange,
         metricPctChange: change.pctChange,
+        metricRawValue: getMetricValue(latest, filters.metricKey),
         timeline,
       });
       continue;
