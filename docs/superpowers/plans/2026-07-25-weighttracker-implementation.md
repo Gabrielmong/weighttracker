@@ -1434,7 +1434,7 @@ export function RegisterForm() {
           type="date"
           value={birthdate}
           onChange={(e) => setBirthdate(e.target.value)}
-          InputLabelProps={{ shrink: true }}
+          slotProps={{ inputLabel: { shrink: true } }} // MUI v6+ moved InputLabelProps to the slots API
           required
         />
         <TextField
