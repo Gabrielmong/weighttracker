@@ -843,7 +843,7 @@ export function computeGoalRelativePctChange(baseline: number, current: number, 
   const rawPct = ((current - baseline) / baseline) * 100;
   if (goal === 'LOSE') return -rawPct;
   if (goal === 'GAIN') return rawPct;
-  return -Math.abs(rawPct);
+  return -Math.abs(rawPct) || 0; // normalize -0 to 0 (Math.abs(0) === 0, so -0 can leak out here)
 }
 ```
 
