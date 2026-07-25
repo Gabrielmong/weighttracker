@@ -145,12 +145,42 @@ Expected: 1 passed (theme.test.ts)
 
 - [ ] **Step 8: Wire the theme into the root layout**
 
+Next.js App Router treats `layout.tsx` as a Server Component by default. Passing
+`theme` (which contains functions like `breakpoints.up`) as a prop from a
+Server Component into a Client Component (`ThemeProvider`) fails at build time
+with a serialization error. Keep the theme entirely inside a Client Component
+so it never crosses that boundary as a prop.
+
+Note on package version: `@mui/material-nextjs` ships per-Next-major entry
+points (`v14-appRouter`, `v15-appRouter`, `v16-appRouter`, ...) — import the
+one matching your installed Next.js major version (check
+`node_modules/@mui/material-nextjs/` if unsure).
+
+Create `src/theme/ThemeRegistry.tsx`:
+```tsx
+'use client';
+
+import { ReactNode } from 'react';
+import { AppRouterCacheProvider } from '@mui/material-nextjs/v16-appRouter';
+import { ThemeProvider, CssBaseline } from '@mui/material';
+import { theme } from './theme';
+
+export function ThemeRegistry({ children }: { children: ReactNode }) {
+  return (
+    <AppRouterCacheProvider>
+      <ThemeProvider theme={theme}>
+        <CssBaseline />
+        {children}
+      </ThemeProvider>
+    </AppRouterCacheProvider>
+  );
+}
+```
+
 Create `src/app/layout.tsx`:
 ```tsx
 import { ReactNode } from 'react';
-import { AppRouterCacheProvider } from '@mui/material-nextjs/v14-appRouter';
-import { ThemeProvider, CssBaseline } from '@mui/material';
-import { theme } from '@/theme/theme';
+import { ThemeRegistry } from '@/theme/ThemeRegistry';
 
 export const metadata = { title: 'WeightTracker' };
 
@@ -158,12 +188,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="en">
       <body>
-        <AppRouterCacheProvider>
-          <ThemeProvider theme={theme}>
-            <CssBaseline />
-            {children}
-          </ThemeProvider>
-        </AppRouterCacheProvider>
+        <ThemeRegistry>{children}</ThemeRegistry>
       </body>
     </html>
   );
