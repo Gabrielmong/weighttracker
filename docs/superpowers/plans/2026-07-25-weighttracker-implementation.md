@@ -3396,6 +3396,16 @@ git commit -m "Add user detail page with timeline chart and score breakdown"
 
 - [ ] **Step 1: Write failing tests for the admin service**
 
+This hits the same compound-unique-index-with-null limitation documented in
+Task 2's seed script: `prisma.metricConfig.upsert({ where: {
+challengeId_metricKey: { challengeId: null, ... } } })` throws `Argument
+challengeId must not be null` at runtime, because SQL unique constraints treat
+NULL as a distinct value per row and Prisma's generated compound-key shorthand
+doesn't support looking one up with `null` in it. `updateMetricConfig` uses
+the same find-then-create/update pattern as the seed script instead of a
+single `upsert` call — test it accordingly, mocking `findFirst`/`update`/
+`create` rather than `upsert`.
+
 Create `src/features/admin/service.test.ts`:
 ```ts
 import { describe, it, expect, beforeEach, vi } from 'vitest';
@@ -3409,8 +3419,8 @@ import { prisma } from '@/lib/prisma';
 
 vi.mock('@/lib/prisma', () => ({
   prisma: {
-    metricConfig: { upsert: vi.fn() },
-    handicapBracket: { upsert: vi.fn() },
+    metricConfig: { findFirst: vi.fn(), update: vi.fn(), create: vi.fn() },
+    handicapBracket: { create: vi.fn(), update: vi.fn() },
     condition: { create: vi.fn() },
     userCondition: { upsert: vi.fn() },
   },
@@ -3419,20 +3429,45 @@ vi.mock('@/lib/prisma', () => ({
 describe('admin service', () => {
   beforeEach(() => vi.clearAllMocks());
 
-  it('updateMetricConfig upserts by challengeId + metricKey', async () => {
-    (prisma.metricConfig.upsert as any).mockResolvedValue({ id: 'mc1' });
+  it('updateMetricConfig creates a new global-default row when none exists', async () => {
+    (prisma.metricConfig.findFirst as any).mockResolvedValue(null);
+    (prisma.metricConfig.create as any).mockResolvedValue({ id: 'mc1' });
     await updateMetricConfig({ metricKey: 'BODY_FAT_PCT', weight: 2, directionType: 'FIXED', fixedDirection: 'DOWN' });
-    expect(prisma.metricConfig.upsert).toHaveBeenCalledWith(
-      expect.objectContaining({
-        where: { challengeId_metricKey: { challengeId: null, metricKey: 'BODY_FAT_PCT' } },
-      })
-    );
+    expect(prisma.metricConfig.findFirst).toHaveBeenCalledWith({
+      where: { challengeId: null, metricKey: 'BODY_FAT_PCT' },
+    });
+    expect(prisma.metricConfig.create).toHaveBeenCalledWith({
+      data: { metricKey: 'BODY_FAT_PCT', weight: 2, directionType: 'FIXED', fixedDirection: 'DOWN', challengeId: null },
+    });
   });
 
-  it('upsertHandicapBracket creates or updates a bracket', async () => {
-    (prisma.handicapBracket.upsert as any).mockResolvedValue({ id: 'hb1' });
+  it('updateMetricConfig updates the existing row by id when one exists', async () => {
+    (prisma.metricConfig.findFirst as any).mockResolvedValue({ id: 'existing-1' });
+    (prisma.metricConfig.update as any).mockResolvedValue({ id: 'existing-1' });
+    await updateMetricConfig({ metricKey: 'BODY_FAT_PCT', weight: 2, directionType: 'FIXED', fixedDirection: 'DOWN' });
+    expect(prisma.metricConfig.update).toHaveBeenCalledWith({
+      where: { id: 'existing-1' },
+      data: { weight: 2, directionType: 'FIXED', fixedDirection: 'DOWN' },
+    });
+  });
+
+  it('upsertHandicapBracket creates a new bracket when no id is given', async () => {
+    (prisma.handicapBracket.create as any).mockResolvedValue({ id: 'hb1' });
     const result = await upsertHandicapBracket({ gender: 'FEMALE', minAge: 45, maxAge: 120, multiplier: 1.25 });
     expect(result.id).toBe('hb1');
+    expect(prisma.handicapBracket.create).toHaveBeenCalledWith({
+      data: { gender: 'FEMALE', minAge: 45, maxAge: 120, multiplier: 1.25 },
+    });
+  });
+
+  it('upsertHandicapBracket updates an existing bracket when an id is given', async () => {
+    (prisma.handicapBracket.update as any).mockResolvedValue({ id: 'hb1' });
+    const result = await upsertHandicapBracket({ id: 'hb1', gender: 'FEMALE', minAge: 45, maxAge: 120, multiplier: 1.3 });
+    expect(result.id).toBe('hb1');
+    expect(prisma.handicapBracket.update).toHaveBeenCalledWith({
+      where: { id: 'hb1' },
+      data: { id: 'hb1', gender: 'FEMALE', minAge: 45, maxAge: 120, multiplier: 1.3 },
+    });
   });
 
   it('createCondition stores name, description, multiplier', async () => {
@@ -3471,11 +3506,16 @@ export async function updateMetricConfig(input: {
   directionType: DirectionType;
   fixedDirection: FixedDirection | null;
 }) {
-  return prisma.metricConfig.upsert({
-    where: { challengeId_metricKey: { challengeId: null as unknown as string, metricKey: input.metricKey } },
-    update: { weight: input.weight, directionType: input.directionType, fixedDirection: input.fixedDirection },
-    create: { ...input, challengeId: null },
+  const existing = await prisma.metricConfig.findFirst({
+    where: { challengeId: null, metricKey: input.metricKey },
   });
+  if (existing) {
+    return prisma.metricConfig.update({
+      where: { id: existing.id },
+      data: { weight: input.weight, directionType: input.directionType, fixedDirection: input.fixedDirection },
+    });
+  }
+  return prisma.metricConfig.create({ data: { ...input, challengeId: null } });
 }
 
 export async function upsertHandicapBracket(input: {
@@ -3535,7 +3575,7 @@ export async function startChallenge(input: { name: string; startDate: string })
 - [ ] **Step 4: Run to verify it passes**
 
 Run: `npm test -- features/admin/service`
-Expected: 4 passed
+Expected: 6 passed
 
 - [ ] **Step 5: Define the GraphQL schema**
 
@@ -3679,19 +3719,81 @@ export const resolvers = {
 };
 ```
 
-- [ ] **Step 7: Register in the merged schema**
+- [ ] **Step 7: Register in the merged schema and remove the placeholder fields**
 
-Modify `src/lib/graphql/schema.ts` — add `adminTypeDefs`/`adminResolvers`, following the same pattern as prior tasks. At this point also remove the now-unused `_placeholder` root `Query`/`Mutation` fields and their resolver, since real fields exist across all registered features.
+Modify `src/features/scoring/graphql/typeDefs.ts` — `mergeTypeDefs` combines a
+fieldless base `type Query`/`type Mutation` declaration with every other
+file's `extend type Query { ... }`/`extend type Mutation { ... }` fine (this
+is a standard schema-splitting pattern), so once every feature contributes
+real fields, the root file no longer needs the `_placeholder` fields at all:
+```ts
+export const rootTypeDefs = `#graphql
+  type Query
+  type Mutation
+`;
+```
 
-- [ ] **Step 8: Run the full test suite**
+Modify `src/lib/graphql/schema.ts` — add `adminTypeDefs`/`adminResolvers`, and
+drop the `_placeholder` resolver entry entirely (no field to resolve
+anymore):
+```ts
+import { makeExecutableSchema } from '@graphql-tools/schema';
+import { mergeTypeDefs, mergeResolvers } from '@graphql-tools/merge';
+import { rootTypeDefs } from '@/features/scoring/graphql/typeDefs';
+import { typeDefs as measurementsTypeDefs } from '@/features/measurements/graphql/typeDefs';
+import { resolvers as measurementsResolvers } from '@/features/measurements/graphql/resolvers';
+import { typeDefs as leaderboardTypeDefs } from '@/features/leaderboard/graphql/typeDefs';
+import { resolvers as leaderboardResolvers } from '@/features/leaderboard/graphql/resolvers';
+import { typeDefs as usersTypeDefs } from '@/features/users/graphql/typeDefs';
+import { resolvers as usersResolvers } from '@/features/users/graphql/resolvers';
+import { typeDefs as adminTypeDefs } from '@/features/admin/graphql/typeDefs';
+import { resolvers as adminResolvers } from '@/features/admin/graphql/resolvers';
+
+const typeDefs = [rootTypeDefs, measurementsTypeDefs, leaderboardTypeDefs, usersTypeDefs, adminTypeDefs];
+const resolvers = [measurementsResolvers, leaderboardResolvers, usersResolvers, adminResolvers];
+
+export const schema = makeExecutableSchema({
+  typeDefs: mergeTypeDefs(typeDefs),
+  resolvers: mergeResolvers(resolvers),
+});
+```
+
+Run `npm run codegen` afterward to confirm the merged schema still builds —
+inspect the regenerated `schema.graphql` and confirm `type Query { ... }`
+lists every feature's fields with no `_placeholder` left.
+
+- [ ] **Step 8: Exclude generated codegen output from the TypeScript build**
+
+Combining the `typescript` and `typescript-operations` plugins across two
+separate `generates` outputs (`types.ts` and `operations.ts`, per Task 6)
+causes `operations.ts` to redeclare the same GraphQL enum twice — once as
+`export enum Gender` and once as `export type Gender = ...` — which fails
+TypeScript's "Enum declarations can only merge with namespace or other enum
+declarations" check. Since app code doesn't currently import from
+`generated/operations.ts` (components use plain `gql` queries with hand-written
+result interfaces, per Tasks 10 and 12), the pragmatic fix is excluding the
+whole generated directory from the type-checked build rather than reworking
+the codegen plugin pipeline for output nothing consumes yet.
+
+Modify `tsconfig.json`'s `exclude` array:
+```json
+{
+  "exclude": ["node_modules", "src/lib/graphql/generated"]
+}
+```
+
+- [ ] **Step 9: Run the full test suite and build**
 
 Run: `npm test`
 Expected: all tests pass, no failures
 
-- [ ] **Step 9: Commit**
+Run: `npm run build`
+Expected: builds successfully with no type errors.
+
+- [ ] **Step 10: Commit**
 
 ```bash
-git add src/features/admin/service.ts src/features/admin/service.test.ts src/features/admin/graphql src/lib/graphql/schema.ts
+git add src/features/admin/service.ts src/features/admin/service.test.ts src/features/admin/graphql src/lib/graphql/schema.ts src/features/scoring/graphql/typeDefs.ts tsconfig.json
 git commit -m "Add admin GraphQL API: metric configs, handicaps, conditions, challenge management"
 ```
 

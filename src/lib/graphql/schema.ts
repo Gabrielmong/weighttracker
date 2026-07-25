@@ -7,14 +7,11 @@ import { typeDefs as leaderboardTypeDefs } from '@/features/leaderboard/graphql/
 import { resolvers as leaderboardResolvers } from '@/features/leaderboard/graphql/resolvers';
 import { typeDefs as usersTypeDefs } from '@/features/users/graphql/typeDefs';
 import { resolvers as usersResolvers } from '@/features/users/graphql/resolvers';
+import { typeDefs as adminTypeDefs } from '@/features/admin/graphql/typeDefs';
+import { resolvers as adminResolvers } from '@/features/admin/graphql/resolvers';
 
-const typeDefs = [rootTypeDefs, measurementsTypeDefs, leaderboardTypeDefs, usersTypeDefs];
-const resolvers = [
-  { Query: { _placeholder: () => true }, Mutation: { _placeholder: () => true } },
-  measurementsResolvers,
-  leaderboardResolvers,
-  usersResolvers,
-];
+const typeDefs = [rootTypeDefs, measurementsTypeDefs, leaderboardTypeDefs, usersTypeDefs, adminTypeDefs];
+const resolvers = [measurementsResolvers, leaderboardResolvers, usersResolvers, adminResolvers];
 
 export const schema = makeExecutableSchema({
   typeDefs: mergeTypeDefs(typeDefs),
