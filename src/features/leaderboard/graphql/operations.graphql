@@ -1,0 +1,10 @@
+query Leaderboard($gender: Gender, $scoreType: ScoreType, $minAge: Int, $maxAge: Int, $metricKey: String) {
+  leaderboard(gender: $gender, scoreType: $scoreType, minAge: $minAge, maxAge: $maxAge, metricKey: $metricKey) {
+    userId
+    displayName
+    rank
+    rawScore
+    finalScore
+    metricPctChange
+  }
+}

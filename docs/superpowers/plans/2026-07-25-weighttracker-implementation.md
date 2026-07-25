@@ -2647,9 +2647,14 @@ Expected: FAIL — `Cannot find module './LeaderboardTable'`
 
 - [ ] **Step 4: Implement the table component**
 
+Note: the name cell links to `/users/[id]` (the per-user detail page from Task
+12) right away — wiring it here instead of coming back to modify this file
+during Task 12 avoids a redundant edit later.
+
 Create `src/features/leaderboard/components/LeaderboardTable.tsx`:
 ```tsx
 import { Table, TableHead, TableRow, TableCell, TableBody, Paper } from '@mui/material';
+import Link from 'next/link';
 
 export interface LeaderboardRowData {
   userId: string;
@@ -2683,7 +2688,9 @@ export function LeaderboardTable({
           {rows.map((row) => (
             <TableRow key={row.userId}>
               <TableCell>{row.rank}</TableCell>
-              <TableCell>{row.displayName}</TableCell>
+              <TableCell>
+                <Link href={`/users/${row.userId}`}>{row.displayName}</Link>
+              </TableCell>
               <TableCell align="right">
                 {isPerMetric
                   ? `${(row.metricPctChange ?? 0).toFixed(2)}%`
@@ -2751,7 +2758,8 @@ export function LeaderboardFilters({
   onChange: (value: LeaderboardFilterState) => void;
 }) {
   return (
-    <Stack direction="row" spacing={2} sx={{ mb: 2 }} flexWrap="wrap" useFlexGap>
+    // MUI v9 dropped the Stack `flexWrap`/`useFlexGap` shorthand props — fold wrapping into `sx` instead.
+    <Stack direction="row" spacing={2} sx={{ mb: 2, flexWrap: 'wrap' }}>
       <ToggleButtonGroup
         exclusive
         value={value.gender}
@@ -2801,6 +2809,11 @@ export function LeaderboardFilters({
 
 - [ ] **Step 7: Wire up the leaderboard page**
 
+Apollo Client v4's `useQuery` needs an explicit `TData` generic to type
+`data` when the query is a plain `gql` template (no codegen-generated typed
+document) — without it, `data` types as `{}` and `data?.leaderboard` fails to
+compile.
+
 Create `src/app/leaderboard/page.tsx`:
 ```tsx
 'use client';
@@ -2810,8 +2823,12 @@ import { gql } from '@apollo/client';
 import { useQuery } from '@apollo/client/react';
 import { Container, Typography, CircularProgress, Button } from '@mui/material';
 import Link from 'next/link';
-import { LeaderboardTable } from '@/features/leaderboard/components/LeaderboardTable';
+import { LeaderboardTable, LeaderboardRowData } from '@/features/leaderboard/components/LeaderboardTable';
 import { LeaderboardFilters, LeaderboardFilterState, ageBracketToRange } from '@/features/leaderboard/components/LeaderboardFilters';
+
+interface LeaderboardQueryData {
+  leaderboard: LeaderboardRowData[];
+}
 
 const LEADERBOARD_QUERY = gql`
   query Leaderboard($gender: Gender, $scoreType: ScoreType, $minAge: Int, $maxAge: Int, $metricKey: String) {
@@ -2834,7 +2851,7 @@ export default function LeaderboardPage() {
     metricKey: 'COMBINED',
   });
   const { minAge, maxAge } = ageBracketToRange(filters.ageBracket);
-  const { data, loading } = useQuery(LEADERBOARD_QUERY, {
+  const { data, loading } = useQuery<LeaderboardQueryData>(LEADERBOARD_QUERY, {
     variables: {
       gender: filters.gender === 'ALL' ? null : filters.gender,
       scoreType: filters.scoreType,
@@ -3120,7 +3137,7 @@ git commit -m "Add user detail GraphQL API: timeline and score breakdown"
 - Create: `src/features/users/components/ScoreBreakdownPanel.tsx`
 - Create: `src/features/users/components/ScoreBreakdownPanel.test.tsx`
 - Create: `src/app/users/[id]/page.tsx`
-- Modify: `src/features/leaderboard/components/LeaderboardTable.tsx` (link each row to its user detail page)
+- (No modification needed to `LeaderboardTable.tsx` — it already links each row to `/users/[id]`, wired in during Task 10.)
 
 **Interfaces:**
 - Consumes: `userDetail` GraphQL query from Task 11.
@@ -3336,21 +3353,13 @@ export default function UserDetailPage() {
 }
 ```
 
-- [ ] **Step 8: Link leaderboard rows to user detail**
+- [ ] **Step 8: Commit**
 
-Modify `src/features/leaderboard/components/LeaderboardTable.tsx` — wrap the name cell in a link:
-```tsx
-import Link from 'next/link';
-// ...
-<TableCell>
-  <Link href={`/users/${row.userId}`}>{row.displayName}</Link>
-</TableCell>
-```
-
-- [ ] **Step 9: Commit**
+`LeaderboardTable` already links each row to `/users/[id]` — that was wired in
+during Task 10 instead of here, so there's nothing to modify in this task.
 
 ```bash
-git add src/features/users/graphql/operations.graphql src/features/users/components src/app/users src/features/leaderboard/components/LeaderboardTable.tsx
+git add src/features/users/graphql/operations.graphql src/features/users/components src/app/users
 git commit -m "Add user detail page with timeline chart and score breakdown"
 ```
 
