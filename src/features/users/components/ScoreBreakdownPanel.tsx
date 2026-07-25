@@ -32,7 +32,7 @@ export function ScoreBreakdownPanel({ breakdown }: { breakdown: ScoreBreakdown }
     <Stack spacing={2}>
       <Card variant="outlined">
         <CardContent>
-          <Typography variant="h6" gutterBottom>Metric Changes</Typography>
+          <Typography variant="h6" gutterBottom>Cambios en Métricas</Typography>
           <Box
             sx={{
               display: 'grid',
@@ -58,7 +58,7 @@ export function ScoreBreakdownPanel({ breakdown }: { breakdown: ScoreBreakdown }
                 </Typography>
                 {change.weight != null && change.contribution != null && (
                   <Typography variant="caption" color="text.secondary">
-                    {signed(change.pctChange)}% × {change.weight.toFixed(2)} weight = {signed(change.contribution)} pts
+                    {signed(change.pctChange)}% × peso {change.weight.toFixed(2)} = {signed(change.contribution)} pts
                   </Typography>
                 )}
               </Box>
@@ -69,30 +69,30 @@ export function ScoreBreakdownPanel({ breakdown }: { breakdown: ScoreBreakdown }
 
       <Card variant="outlined">
         <CardContent>
-          <Typography variant="h6" gutterBottom>Score Summary</Typography>
+          <Typography variant="h6" gutterBottom>Resumen del Puntaje</Typography>
           <Stack spacing={1}>
             <Stack direction="row" spacing={1} sx={{ flexWrap: 'wrap' }}>
-              <Chip size="small" label={`Age/gender ×${breakdown.ageGenderMultiplier.toFixed(2)}`} />
+              <Chip size="small" label={`Edad/género ×${breakdown.ageGenderMultiplier.toFixed(2)}`} />
               {breakdown.conditionMultipliers.map((multiplier, index) => (
-                <Chip key={index} size="small" label={`Condition ×${multiplier.toFixed(2)}`} />
+                <Chip key={index} size="small" label={`Condición ×${multiplier.toFixed(2)}`} />
               ))}
             </Stack>
 
             <Divider sx={{ my: 1 }} />
 
-            <Typography variant="subtitle2">How this is calculated</Typography>
+            <Typography variant="subtitle2">Cómo se calcula esto</Typography>
             <Typography
               variant="body2"
               color="text.secondary"
               component="pre"
               sx={{ whiteSpace: 'pre-wrap', fontFamily: 'monospace', m: 0 }}
             >
-              {'Raw score = Σ (metric % change × metric weight)\n'}
+              {'Puntaje base = Σ (% cambio de la métrica × peso de la métrica)\n'}
               {breakdown.metricChanges
                 .map((c) => `  ${metricLabel(c.metricKey)}: ${signed(c.pctChange)}% × ${(c.weight ?? 0).toFixed(2)} = ${signed(c.contribution ?? 0)}`)
                 .join('\n')}
               {`\n  = ${breakdown.rawScore.toFixed(2)}\n\n`}
-              {'Final score = Raw score × Age/gender multiplier × Condition multipliers\n'}
+              {'Puntaje final = Puntaje base × Multiplicador edad/género × Multiplicadores de condición\n'}
               {`  = ${breakdown.rawScore.toFixed(2)} × ${breakdown.ageGenderMultiplier.toFixed(2)} × ${conditionProduct.toFixed(2)}\n`}
               {`  = ${breakdown.finalScore.toFixed(2)}`}
             </Typography>
@@ -100,7 +100,7 @@ export function ScoreBreakdownPanel({ breakdown }: { breakdown: ScoreBreakdown }
             <Typography variant="h4" color="primary" sx={{ mt: 1 }}>
               {breakdown.finalScore.toFixed(2)}
             </Typography>
-            <Typography variant="caption" color="text.secondary">Final score</Typography>
+            <Typography variant="caption" color="text.secondary">Puntaje final</Typography>
           </Stack>
         </CardContent>
       </Card>

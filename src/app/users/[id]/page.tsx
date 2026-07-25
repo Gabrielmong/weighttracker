@@ -88,8 +88,8 @@ export default function UserDetailPage() {
   const { data: myMeasurementsData } = useQuery<MyMeasurementsQueryData>(MY_MEASUREMENTS_QUERY, { skip: !isOwnProfile });
 
   if (loading) return <CircularProgress />;
-  if (error) return <Alert severity="error">Failed to load this profile: {error.message}</Alert>;
-  if (!data?.userDetail) return <Typography>User not found.</Typography>;
+  if (error) return <Alert severity="error">No se pudo cargar este perfil: {error.message}</Alert>;
+  if (!data?.userDetail) return <Typography>Usuario no encontrado.</Typography>;
 
   const { displayName, timeline, scoreBreakdown } = data.userDetail;
 
@@ -112,7 +112,7 @@ export default function UserDetailPage() {
         <Stack spacing={2}>
           <TextField
             select
-            label="Chart Field"
+            label="Campo del Gráfico"
             size="small"
             value={metricKey}
             onChange={(e) => setMetricKey(e.target.value as MetricKey)}
@@ -128,7 +128,7 @@ export default function UserDetailPage() {
 
       {isOwnProfile && (
         <Box sx={{ mt: 3 }}>
-          <Typography variant="h6" gutterBottom>Your Measurements</Typography>
+          <Typography variant="h6" gutterBottom>Tus Mediciones</Typography>
           <MeasurementsTable measurements={myMeasurementsData?.myMeasurements ?? []} />
         </Box>
       )}

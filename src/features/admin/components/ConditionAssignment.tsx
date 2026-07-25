@@ -93,16 +93,16 @@ export function ConditionAssignment() {
 
   return (
     <Stack spacing={2}>
-      <Typography variant="h6">Assign Health Conditions</Typography>
+      <Typography variant="h6">Asignar Condiciones de Salud</Typography>
       <FormControl sx={{ minWidth: 220 }}>
-        <InputLabel id="assign-user-label">Select User</InputLabel>
+        <InputLabel id="assign-user-label">Seleccionar Usuario</InputLabel>
         <Select
           labelId="assign-user-label"
-          label="Select User"
+          label="Seleccionar Usuario"
           value={userId}
           onChange={(e) => setUserId(e.target.value)}
         >
-          {usersLoading && <MenuItem value="">Loading…</MenuItem>}
+          {usersLoading && <MenuItem value="">Cargando…</MenuItem>}
           {usersData?.users.map((user) => (
             <MenuItem key={user.id} value={user.id}>{user.displayName}</MenuItem>
           ))}

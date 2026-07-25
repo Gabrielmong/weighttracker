@@ -14,12 +14,12 @@ export async function createContext(): Promise<GraphQLContext> {
 
 export function requireUser(context: GraphQLContext): { id: string; isAdmin: boolean } {
   const user = context.session?.user as { id?: string; isAdmin?: boolean } | undefined;
-  if (!user?.id) throw new Error('Not authenticated.');
+  if (!user?.id) throw new Error('No autenticado.');
   return { id: user.id, isAdmin: !!user.isAdmin };
 }
 
 export function requireAdmin(context: GraphQLContext): { id: string; isAdmin: boolean } {
   const user = requireUser(context);
-  if (!user.isAdmin) throw new Error('Admin access required.');
+  if (!user.isAdmin) throw new Error('Se requiere acceso de administrador.');
   return user;
 }

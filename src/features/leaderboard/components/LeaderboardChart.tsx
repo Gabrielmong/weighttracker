@@ -18,9 +18,9 @@ export function LeaderboardChart({
 
   return (
     <MultiPersonTimelineChart
-      title={isPerMetric ? '% Improvement Over Time' : 'Score Over Time'}
+      title={isPerMetric ? '% de Mejora en el Tiempo' : 'Puntaje en el Tiempo'}
       people={people}
-      emptyMessage="No one has recorded a follow-up measurement yet."
+      emptyMessage="Nadie ha registrado una medición de seguimiento todavía."
     />
   );
 }

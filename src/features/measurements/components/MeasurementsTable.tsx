@@ -22,7 +22,7 @@ function fmt(value: number): string {
 
 export function MeasurementsTable({ measurements }: { measurements: MeasurementRow[] }) {
   if (measurements.length === 0) {
-    return <Typography color="text.secondary">No measurements recorded yet.</Typography>;
+    return <Typography color="text.secondary">Todavía no hay mediciones registradas.</Typography>;
   }
 
   const sorted = [...measurements].sort((a, b) => new Date(a.recordedAt).getTime() - new Date(b.recordedAt).getTime());
@@ -33,17 +33,17 @@ export function MeasurementsTable({ measurements }: { measurements: MeasurementR
       <Table size="small">
         <TableHead>
           <TableRow>
-            <TableCell>Date</TableCell>
-            <TableCell align="right">Weight (kg)</TableCell>
-            <TableCell align="right">BMI</TableCell>
-            <TableCell align="right">Body Fat %</TableCell>
-            <TableCell align="right">Subcut. Fat %</TableCell>
-            <TableCell align="right">Visceral Fat</TableCell>
-            <TableCell align="right">Skeletal Muscle %</TableCell>
-            <TableCell align="right">Muscle Mass (kg)</TableCell>
-            {hasOptional && <TableCell align="right">Protein %</TableCell>}
-            {hasOptional && <TableCell align="right">BMR</TableCell>}
-            {hasOptional && <TableCell align="right">Metabolic Age</TableCell>}
+            <TableCell>Fecha</TableCell>
+            <TableCell align="right">Peso (kg)</TableCell>
+            <TableCell align="right">IMC</TableCell>
+            <TableCell align="right">% Grasa Corporal</TableCell>
+            <TableCell align="right">% Grasa Subcut.</TableCell>
+            <TableCell align="right">Grasa Visceral</TableCell>
+            <TableCell align="right">% Músculo Esquelético</TableCell>
+            <TableCell align="right">Masa Muscular (kg)</TableCell>
+            {hasOptional && <TableCell align="right">% Proteína</TableCell>}
+            {hasOptional && <TableCell align="right">TMB</TableCell>}
+            {hasOptional && <TableCell align="right">Edad Metabólica</TableCell>}
           </TableRow>
         </TableHead>
         <TableBody>
@@ -51,7 +51,7 @@ export function MeasurementsTable({ measurements }: { measurements: MeasurementR
             <TableRow key={m.id}>
               <TableCell>
                 {m.recordedAt.slice(0, 10)}
-                {m.isBaseline && <Chip label="Baseline" size="small" color="primary" sx={{ ml: 1 }} />}
+                {m.isBaseline && <Chip label="Línea Base" size="small" color="primary" sx={{ ml: 1 }} />}
               </TableCell>
               <TableCell align="right">{fmt(m.weightKg)}</TableCell>
               <TableCell align="right">{fmt(m.bmi)}</TableCell>

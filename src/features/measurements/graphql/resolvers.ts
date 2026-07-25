@@ -20,7 +20,7 @@ export const resolvers = {
     recordMeasurement: async (_parent: unknown, args: { input: any }, context: GraphQLContext) => {
       const user = requireUser(context);
       const challenge = await context.prisma.challenge.findFirst({ where: { isActive: true } });
-      if (!challenge) throw new Error('No active challenge.');
+      if (!challenge) throw new Error('No hay un reto activo.');
       return recordMeasurement(user.id, challenge.id, args.input);
     },
   },

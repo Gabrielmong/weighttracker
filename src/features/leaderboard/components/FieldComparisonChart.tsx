@@ -53,13 +53,13 @@ export function FieldComparisonChart({
 
   return (
     <MultiPersonTimelineChart
-      title="Compare a Field Over Time"
+      title="Comparar un Campo en el Tiempo"
       people={people}
-      emptyMessage="No data yet for this field."
+      emptyMessage="Todavía no hay datos para este campo."
       headerContent={
         <TextField
           select
-          label="Field"
+          label="Campo"
           size="small"
           value={metricKey}
           onChange={(e) => setMetricKey(e.target.value as MetricKey)}

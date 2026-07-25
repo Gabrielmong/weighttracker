@@ -10,11 +10,11 @@ describe('MeasurementForm', () => {
         <MeasurementForm onSaved={() => {}} />
       </MockedProvider>
     );
-    const dateInput = screen.getByLabelText(/measurement date/i) as HTMLInputElement;
+    const dateInput = screen.getByLabelText(/fecha de la medición/i) as HTMLInputElement;
     expect(dateInput.value).toBe(new Date().toISOString().slice(0, 10));
-    expect(screen.getByLabelText(/weight/i)).toBeInTheDocument();
-    expect(screen.getByLabelText(/body fat/i)).toBeInTheDocument();
-    expect(screen.getByText(/optional fields/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/peso/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/grasa corporal/i)).toBeInTheDocument();
+    expect(screen.getByText(/campos opcionales/i)).toBeInTheDocument();
   });
 
   it('submits the mutation with entered values, including a backdated measurement date', async () => {
@@ -49,15 +49,15 @@ describe('MeasurementForm', () => {
       </MockedProvider>
     );
 
-    fireEvent.change(screen.getByLabelText(/measurement date/i), { target: { value: '2026-01-15' } });
-    fireEvent.change(screen.getByLabelText(/weight/i), { target: { value: '85' } });
-    fireEvent.change(screen.getByLabelText(/^bmi/i), { target: { value: '26' } });
-    fireEvent.change(screen.getByLabelText(/body fat/i), { target: { value: '20' } });
-    fireEvent.change(screen.getByLabelText(/subcutaneous/i), { target: { value: '16' } });
+    fireEvent.change(screen.getByLabelText(/fecha de la medición/i), { target: { value: '2026-01-15' } });
+    fireEvent.change(screen.getByLabelText(/peso/i), { target: { value: '85' } });
+    fireEvent.change(screen.getByLabelText(/^imc/i), { target: { value: '26' } });
+    fireEvent.change(screen.getByLabelText(/grasa corporal/i), { target: { value: '20' } });
+    fireEvent.change(screen.getByLabelText(/subcutánea/i), { target: { value: '16' } });
     fireEvent.change(screen.getByLabelText(/visceral/i), { target: { value: '8' } });
-    fireEvent.change(screen.getByLabelText(/skeletal muscle/i), { target: { value: '34' } });
-    fireEvent.change(screen.getByLabelText(/muscle mass/i), { target: { value: '29' } });
-    fireEvent.click(screen.getByRole('button', { name: /save/i }));
+    fireEvent.change(screen.getByLabelText(/músculo esquelético/i), { target: { value: '34' } });
+    fireEvent.change(screen.getByLabelText(/masa muscular/i), { target: { value: '29' } });
+    fireEvent.click(screen.getByRole('button', { name: /guardar/i }));
 
     await waitFor(() => expect(onSaved).toHaveBeenCalled());
   });

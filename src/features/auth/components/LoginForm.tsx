@@ -18,7 +18,7 @@ export function LoginForm() {
     if (result?.ok) {
       router.push('/leaderboard');
     } else {
-      setError('Invalid display name or password.');
+      setError('Nombre o contraseña inválidos.');
     }
   }
 
@@ -26,9 +26,9 @@ export function LoginForm() {
     <Box component="form" onSubmit={handleSubmit}>
       <Stack spacing={2}>
         {error && <Alert severity="error">{error}</Alert>}
-        <TextField label="Display Name" value={displayName} onChange={(e) => setDisplayName(e.target.value)} required />
-        <TextField label="Password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required />
-        <Button type="submit" variant="contained">Log in</Button>
+        <TextField label="Nombre" value={displayName} onChange={(e) => setDisplayName(e.target.value)} required />
+        <TextField label="Contraseña" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required />
+        <Button type="submit" variant="contained">Iniciar Sesión</Button>
       </Stack>
     </Box>
   );

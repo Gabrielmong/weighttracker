@@ -13,7 +13,7 @@ export default function AdminPage() {
   const [tab, setTab] = useState(0);
 
   if (!(session?.user as { isAdmin?: boolean } | undefined)?.isAdmin) {
-    return <Typography sx={{ mt: 4 }}>Admin access required.</Typography>;
+    return <Typography sx={{ mt: 4 }}>Se requiere acceso de administrador.</Typography>;
   }
 
   return (
@@ -26,10 +26,10 @@ export default function AdminPage() {
         scrollButtons="auto"
         allowScrollButtonsMobile
       >
-        <Tab label="Metric Weights" />
-        <Tab label="Handicap Brackets" />
-        <Tab label="Conditions" />
-        <Tab label="Assign Conditions" />
+        <Tab label="Pesos de Métricas" />
+        <Tab label="Rangos de Handicap" />
+        <Tab label="Condiciones" />
+        <Tab label="Asignar Condiciones" />
       </Tabs>
       <Box sx={{ mt: 3 }}>
         {tab === 0 && <MetricConfigEditor />}

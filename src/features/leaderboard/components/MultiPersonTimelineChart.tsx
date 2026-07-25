@@ -69,7 +69,7 @@ export function MultiPersonTimelineChart({
       {header}
       <LineChart
         dataset={dataset}
-        xAxis={[{ dataKey: 'date', scaleType: 'point', label: 'Date' }]}
+        xAxis={[{ dataKey: 'date', scaleType: 'point', label: 'Fecha' }]}
         series={series}
         height={350}
       />

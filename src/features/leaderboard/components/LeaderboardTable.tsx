@@ -30,9 +30,9 @@ export function LeaderboardTable({
       <Table>
         <TableHead>
           <TableRow>
-            <TableCell>Rank</TableCell>
-            <TableCell>Name</TableCell>
-            <TableCell align="right">{isPerMetric ? '% Improvement' : 'Score'}</TableCell>
+            <TableCell>Puesto</TableCell>
+            <TableCell>Nombre</TableCell>
+            <TableCell align="right">{isPerMetric ? '% de Mejora' : 'Puntaje'}</TableCell>
           </TableRow>
         </TableHead>
         <TableBody>

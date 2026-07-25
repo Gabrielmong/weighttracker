@@ -7,11 +7,11 @@ import { RegisterForm } from '@/features/auth/components/RegisterForm';
 export default function RegisterPage() {
   return (
     <Container maxWidth="xs" sx={{ mt: 8 }}>
-      <Typography variant="h4" gutterBottom>Join the Challenge</Typography>
+      <Typography variant="h4" gutterBottom>Únete al Reto</Typography>
       <RegisterForm />
       <Typography sx={{ mt: 2 }}>
-        Already have an account?{' '}
-        <Link component={NextLink} href="/login" color="primary" underline="hover">Log in</Link>
+        ¿Ya tienes una cuenta?{' '}
+        <Link component={NextLink} href="/login" color="primary" underline="hover">Inicia Sesión</Link>
       </Typography>
     </Container>
   );

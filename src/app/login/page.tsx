@@ -7,11 +7,11 @@ import { LoginForm } from '@/features/auth/components/LoginForm';
 export default function LoginPage() {
   return (
     <Container maxWidth="xs" sx={{ mt: 8 }}>
-      <Typography variant="h4" gutterBottom>Log in</Typography>
+      <Typography variant="h4" gutterBottom>Iniciar Sesión</Typography>
       <LoginForm />
       <Typography sx={{ mt: 2 }}>
-        Don&apos;t have an account?{' '}
-        <Link component={NextLink} href="/register" color="primary" underline="hover">Sign up</Link>
+        ¿No tienes una cuenta?{' '}
+        <Link component={NextLink} href="/register" color="primary" underline="hover">Regístrate</Link>
       </Typography>
     </Container>
   );

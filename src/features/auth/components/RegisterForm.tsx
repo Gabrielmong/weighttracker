@@ -26,7 +26,7 @@ export function RegisterForm() {
 
     if (!response.ok) {
       const body = await response.json();
-      setError(body.error ?? 'Registration failed.');
+      setError(body.error ?? 'El registro falló.');
       return;
     }
 
@@ -42,14 +42,14 @@ export function RegisterForm() {
     <Box component="form" onSubmit={handleSubmit}>
       <Stack spacing={2}>
         {error && <Alert severity="error">{error}</Alert>}
-        <TextField label="Display Name" value={displayName} onChange={(e) => setDisplayName(e.target.value)} required />
-        <TextField label="Password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required />
-        <TextField select label="Gender" value={gender} onChange={(e) => setGender(e.target.value as 'MALE' | 'FEMALE')}>
-          <MenuItem value="MALE">Male</MenuItem>
-          <MenuItem value="FEMALE">Female</MenuItem>
+        <TextField label="Nombre" value={displayName} onChange={(e) => setDisplayName(e.target.value)} required />
+        <TextField label="Contraseña" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required />
+        <TextField select label="Género" value={gender} onChange={(e) => setGender(e.target.value as 'MALE' | 'FEMALE')}>
+          <MenuItem value="MALE">Masculino</MenuItem>
+          <MenuItem value="FEMALE">Femenino</MenuItem>
         </TextField>
         <TextField
-          label="Birthdate"
+          label="Fecha de Nacimiento"
           type="date"
           value={birthdate}
           onChange={(e) => setBirthdate(e.target.value)}
@@ -58,15 +58,15 @@ export function RegisterForm() {
         />
         <TextField
           select
-          label="Goal"
+          label="Meta"
           value={weightGoal}
           onChange={(e) => setWeightGoal(e.target.value as 'LOSE' | 'GAIN' | 'MAINTAIN')}
         >
-          <MenuItem value="LOSE">Lose weight</MenuItem>
-          <MenuItem value="GAIN">Gain weight</MenuItem>
-          <MenuItem value="MAINTAIN">Maintain weight</MenuItem>
+          <MenuItem value="LOSE">Perder peso</MenuItem>
+          <MenuItem value="GAIN">Ganar peso</MenuItem>
+          <MenuItem value="MAINTAIN">Mantener peso</MenuItem>
         </TextField>
-        <Button type="submit" variant="contained">Create account</Button>
+        <Button type="submit" variant="contained">Crear Cuenta</Button>
       </Stack>
     </Box>
   );

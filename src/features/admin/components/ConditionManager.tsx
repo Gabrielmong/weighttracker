@@ -47,7 +47,7 @@ export function ConditionManager() {
 
   return (
     <Stack spacing={2}>
-      <Typography variant="h6">Health Conditions</Typography>
+      <Typography variant="h6">Condiciones de Salud</Typography>
       {!loading && (
         <List>
           {data?.conditions.map((condition) => (
@@ -58,9 +58,9 @@ export function ConditionManager() {
         </List>
       )}
       <Stack direction="row" spacing={2}>
-        <TextField label="Condition Name" value={name} onChange={(e) => setName(e.target.value)} />
-        <TextField label="Multiplier" type="number" value={multiplier} onChange={(e) => setMultiplier(e.target.value)} />
-        <Button variant="contained" onClick={handleAdd}>Add Condition</Button>
+        <TextField label="Nombre de la Condición" value={name} onChange={(e) => setName(e.target.value)} />
+        <TextField label="Multiplicador" type="number" value={multiplier} onChange={(e) => setMultiplier(e.target.value)} />
+        <Button variant="contained" onClick={handleAdd}>Agregar Condición</Button>
       </Stack>
     </Stack>
   );

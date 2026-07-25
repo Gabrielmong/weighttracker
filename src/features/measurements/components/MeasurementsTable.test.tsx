@@ -23,13 +23,13 @@ describe('MeasurementsTable', () => {
 
     expect(screen.getByText('2026-01-01')).toBeInTheDocument();
     expect(screen.getByText('2026-02-01')).toBeInTheDocument();
-    expect(screen.getByText('Baseline')).toBeInTheDocument();
+    expect(screen.getByText('Línea Base')).toBeInTheDocument();
     expect(screen.getAllByText('90.0')).toHaveLength(1);
     expect(screen.getAllByText('85.0')).toHaveLength(1);
   });
 
   it('shows a friendly message when there are no measurements yet', () => {
     render(<MeasurementsTable measurements={[]} />);
-    expect(screen.getByText(/no measurements recorded yet/i)).toBeInTheDocument();
+    expect(screen.getByText(/no hay mediciones registradas/i)).toBeInTheDocument();
   });
 });

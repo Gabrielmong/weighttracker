@@ -7,7 +7,7 @@ export const metadata = { title: 'WeightTracker' };
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="en">
+    <html lang="es">
       <body>
         <Providers>
           <ThemeRegistry>

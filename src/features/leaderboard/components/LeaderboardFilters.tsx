@@ -4,7 +4,7 @@ import { METRIC_LABELS } from '@/features/scoring/metricLabels';
 export type AgeBracketOption = 'ALL' | '0-29' | '30-44' | '45-120';
 
 export const METRIC_FILTER_OPTIONS: Array<{ value: string; label: string }> = [
-  { value: 'COMBINED', label: 'Combined Score' },
+  { value: 'COMBINED', label: 'Puntaje Combinado' },
   ...Object.entries(METRIC_LABELS).map(([value, label]) => ({ value, label })),
 ];
 
@@ -46,9 +46,9 @@ export function LeaderboardFilters({
         onChange={(_e, gender) => gender && onChange({ ...value, gender })}
         sx={{ width: { xs: '100%', sm: 'auto' } }}
       >
-        <ToggleButton value="ALL">Everyone</ToggleButton>
-        <ToggleButton value="MALE">Men</ToggleButton>
-        <ToggleButton value="FEMALE">Women</ToggleButton>
+        <ToggleButton value="ALL">Todos</ToggleButton>
+        <ToggleButton value="MALE">Hombres</ToggleButton>
+        <ToggleButton value="FEMALE">Mujeres</ToggleButton>
       </ToggleButtonGroup>
       <ToggleButtonGroup
         exclusive
@@ -57,26 +57,26 @@ export function LeaderboardFilters({
         onChange={(_e, scoreType) => scoreType && onChange({ ...value, scoreType })}
         sx={{ width: { xs: '100%', sm: 'auto' } }}
       >
-        <ToggleButton value="FINAL">Handicapped</ToggleButton>
-        <ToggleButton value="RAW">Raw</ToggleButton>
+        <ToggleButton value="FINAL">Ventajas</ToggleButton>
+        <ToggleButton value="RAW">Bruto</ToggleButton>
       </ToggleButtonGroup>
       <TextField
         select
-        label="Age Bracket"
+        label="Rango de Edad"
         size="small"
         fullWidth
         value={value.ageBracket}
         onChange={(e) => onChange({ ...value, ageBracket: e.target.value as AgeBracketOption })}
         sx={{ width: { xs: '100%', sm: 140 } }}
       >
-        <MenuItem value="ALL">All Ages</MenuItem>
+        <MenuItem value="ALL">Todas las Edades</MenuItem>
         <MenuItem value="0-29">0-29</MenuItem>
         <MenuItem value="30-44">30-44</MenuItem>
         <MenuItem value="45-120">45+</MenuItem>
       </TextField>
       <TextField
         select
-        label="Rank By"
+        label="Ordenar Por"
         size="small"
         fullWidth
         value={value.metricKey}

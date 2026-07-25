@@ -25,7 +25,7 @@ export function TimelineChart({ timeline, metricKey }: { timeline: TimelinePoint
     .filter((point): point is { recordedAt: string; pctChange: number; rawValue: number | null | undefined } => point.pctChange !== undefined);
 
   if (points.length === 0) {
-    return <Typography color="text.secondary">No data yet for {METRIC_LABELS[metricKey as MetricKey] ?? metricKey}.</Typography>;
+    return <Typography color="text.secondary">Todavía no hay datos de {METRIC_LABELS[metricKey as MetricKey] ?? metricKey}.</Typography>;
   }
 
   const label = METRIC_LABELS[metricKey as MetricKey] ?? metricKey;
@@ -35,12 +35,12 @@ export function TimelineChart({ timeline, metricKey }: { timeline: TimelinePoint
       <LineChart
         xAxis={[{ data: points.map((_, i) => i), scaleType: 'point', valueFormatter: (i) => points[i]?.recordedAt.slice(0, 10) ?? '' }]}
         yAxis={[
-          { id: 'pct', position: 'left', label: '% change' },
+          { id: 'pct', position: 'left', label: '% cambio' },
           { id: 'raw', position: 'right', label: label },
         ]}
         series={[
-          { data: points.map((p) => p.pctChange), label: `${label} % change`, yAxisId: 'pct' },
-          { data: points.map((p) => p.rawValue ?? null), label: `${label} (raw value)`, yAxisId: 'raw' },
+          { data: points.map((p) => p.pctChange), label: `${label} % cambio`, yAxisId: 'pct' },
+          { data: points.map((p) => p.rawValue ?? null), label: `${label} (valor real)`, yAxisId: 'raw' },
         ]}
         height={300}
       />

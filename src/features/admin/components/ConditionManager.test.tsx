@@ -22,9 +22,9 @@ describe('ConditionManager', () => {
 
     expect(await screen.findByText('Hypothyroidism')).toBeInTheDocument();
 
-    fireEvent.change(screen.getByLabelText(/condition name/i), { target: { value: 'PCOS' } });
-    fireEvent.change(screen.getByLabelText(/multiplier/i), { target: { value: '1.1' } });
-    fireEvent.click(screen.getByRole('button', { name: /add condition/i }));
+    fireEvent.change(screen.getByLabelText(/nombre de la condición/i), { target: { value: 'PCOS' } });
+    fireEvent.change(screen.getByLabelText(/multiplicador/i), { target: { value: '1.1' } });
+    fireEvent.click(screen.getByRole('button', { name: /agregar condición/i }));
 
     await waitFor(() => expect(screen.getByText('PCOS')).toBeInTheDocument());
   });

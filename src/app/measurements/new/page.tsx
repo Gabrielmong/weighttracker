@@ -8,7 +8,7 @@ export default function NewMeasurementPage() {
   const router = useRouter();
   return (
     <Container maxWidth="sm" sx={{ mt: 4 }}>
-      <Typography variant="h4" gutterBottom>Record a Measurement</Typography>
+      <Typography variant="h4" gutterBottom>Registrar una Medición</Typography>
       <MeasurementForm onSaved={() => router.push('/leaderboard')} />
     </Container>
   );

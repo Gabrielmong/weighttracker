@@ -29,7 +29,7 @@ describe('ConditionAssignment', () => {
       </MockedProvider>
     );
 
-    fireEvent.mouseDown(await screen.findByLabelText(/select user/i));
+    fireEvent.mouseDown(await screen.findByLabelText(/seleccionar usuario/i));
     fireEvent.click(await screen.findByRole('option', { name: 'Alice' }));
 
     const checkbox = await screen.findByRole('checkbox', { name: /hypothyroidism/i });
@@ -58,7 +58,7 @@ describe('ConditionAssignment', () => {
       </MockedProvider>
     );
 
-    fireEvent.mouseDown(await screen.findByLabelText(/select user/i));
+    fireEvent.mouseDown(await screen.findByLabelText(/seleccionar usuario/i));
     fireEvent.click(await screen.findByRole('option', { name: 'Alice' }));
 
     const checkbox = await screen.findByRole('checkbox', { name: /hypothyroidism/i });

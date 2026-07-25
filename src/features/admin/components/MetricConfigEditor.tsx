@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { gql } from '@apollo/client';
 import { useQuery, useMutation } from '@apollo/client/react';
 import { TextField, Button, Stack, Typography, MenuItem, CircularProgress } from '@mui/material';
+import { METRIC_LABELS } from '@/features/scoring/metricLabels';
 
 const METRIC_CONFIGS_QUERY = gql`
   query MetricConfigs {
@@ -21,11 +22,6 @@ const UPDATE_METRIC_CONFIG = gql`
     updateMetricConfig(input: $input)
   }
 `;
-
-const METRIC_KEYS = [
-  'WEIGHT', 'BMI', 'BODY_FAT_PCT', 'SUBCUTANEOUS_FAT_PCT', 'VISCERAL_FAT_RATING',
-  'SKELETAL_MUSCLE_PCT', 'MUSCLE_MASS_KG', 'PROTEIN_PCT', 'BMR', 'METABOLIC_AGE',
-];
 
 interface MetricConfigsQueryData {
   metricConfigs: Array<{
@@ -70,27 +66,27 @@ export function MetricConfigEditor() {
 
   return (
     <Stack spacing={2}>
-      <Typography variant="h6">Metric Weights</Typography>
+      <Typography variant="h6">Pesos de Métricas</Typography>
       {loading ? (
         <CircularProgress size={24} />
       ) : (
         <>
-          <TextField select label="Metric" value={metricKey} onChange={(e) => setMetricKey(e.target.value)}>
-            {METRIC_KEYS.map((key) => <MenuItem key={key} value={key}>{key}</MenuItem>)}
+          <TextField select label="Métrica" value={metricKey} onChange={(e) => setMetricKey(e.target.value)}>
+            {Object.entries(METRIC_LABELS).map(([key, label]) => <MenuItem key={key} value={key}>{label}</MenuItem>)}
           </TextField>
-          <TextField label="Weight" type="number" value={weight} onChange={(e) => setWeight(e.target.value)} />
-          <TextField select label="Direction Type" value={directionType} onChange={(e) => setDirectionType(e.target.value as 'FIXED' | 'GOAL_RELATIVE')}>
-            <MenuItem value="FIXED">Fixed</MenuItem>
-            <MenuItem value="GOAL_RELATIVE">Goal-relative</MenuItem>
+          <TextField label="Peso" type="number" value={weight} onChange={(e) => setWeight(e.target.value)} />
+          <TextField select label="Tipo de Dirección" value={directionType} onChange={(e) => setDirectionType(e.target.value as 'FIXED' | 'GOAL_RELATIVE')}>
+            <MenuItem value="FIXED">Fija</MenuItem>
+            <MenuItem value="GOAL_RELATIVE">Relativa a la meta</MenuItem>
           </TextField>
           {directionType === 'FIXED' && (
-            <TextField select label="Fixed Direction" value={fixedDirection} onChange={(e) => setFixedDirection(e.target.value as 'UP' | 'DOWN')}>
-              <MenuItem value="UP">Up is improvement</MenuItem>
-              <MenuItem value="DOWN">Down is improvement</MenuItem>
+            <TextField select label="Dirección Fija" value={fixedDirection} onChange={(e) => setFixedDirection(e.target.value as 'UP' | 'DOWN')}>
+              <MenuItem value="UP">Subir es mejorar</MenuItem>
+              <MenuItem value="DOWN">Bajar es mejorar</MenuItem>
             </TextField>
           )}
-          <Button variant="contained" onClick={handleSave}>Save</Button>
-          {saveResult ? <Typography color="success.main">Saved.</Typography> : null}
+          <Button variant="contained" onClick={handleSave}>Guardar</Button>
+          {saveResult ? <Typography color="success.main">Guardado.</Typography> : null}
         </>
       )}
     </Stack>

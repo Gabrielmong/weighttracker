@@ -73,33 +73,33 @@ export function MeasurementForm({ onSaved }: { onSaved: () => void }) {
     <Box component="form" onSubmit={handleSubmit}>
       <Stack spacing={2}>
         <TextField
-          label="Measurement Date"
+          label="Fecha de la Medición"
           type="date"
           value={form.recordedAt}
           onChange={setField('recordedAt')}
           slotProps={{ inputLabel: { shrink: true } }}
           required
         />
-        <TextField label="Weight (kg)" type="number" value={form.weightKg} onChange={setField('weightKg')} required />
-        <TextField label="BMI" type="number" value={form.bmi} onChange={setField('bmi')} required />
-        <TextField label="Body Fat %" type="number" value={form.bodyFatPct} onChange={setField('bodyFatPct')} required />
-        <TextField label="Subcutaneous Fat %" type="number" value={form.subcutaneousFatPct} onChange={setField('subcutaneousFatPct')} required />
-        <TextField label="Visceral Fat Rating" type="number" value={form.visceralFatRating} onChange={setField('visceralFatRating')} required />
-        <TextField label="Skeletal Muscle %" type="number" value={form.skeletalMusclePct} onChange={setField('skeletalMusclePct')} required />
-        <TextField label="Muscle Mass (kg)" type="number" value={form.muscleMassKg} onChange={setField('muscleMassKg')} required />
+        <TextField label="Peso (kg)" type="number" value={form.weightKg} onChange={setField('weightKg')} required />
+        <TextField label="IMC" type="number" value={form.bmi} onChange={setField('bmi')} required />
+        <TextField label="% Grasa Corporal" type="number" value={form.bodyFatPct} onChange={setField('bodyFatPct')} required />
+        <TextField label="% Grasa Subcutánea" type="number" value={form.subcutaneousFatPct} onChange={setField('subcutaneousFatPct')} required />
+        <TextField label="Nivel de Grasa Visceral" type="number" value={form.visceralFatRating} onChange={setField('visceralFatRating')} required />
+        <TextField label="% Músculo Esquelético" type="number" value={form.skeletalMusclePct} onChange={setField('skeletalMusclePct')} required />
+        <TextField label="Masa Muscular (kg)" type="number" value={form.muscleMassKg} onChange={setField('muscleMassKg')} required />
 
         <Link component="button" type="button" onClick={() => setShowOptional(!showOptional)}>
-          {showOptional ? 'Hide' : 'Show'} optional fields
+          {showOptional ? 'Ocultar' : 'Mostrar'} campos opcionales
         </Link>
         <Collapse in={showOptional}>
           <Stack spacing={2}>
-            <TextField label="Protein %" type="number" value={form.proteinPct} onChange={setField('proteinPct')} />
-            <TextField label="BMR" type="number" value={form.bmr} onChange={setField('bmr')} />
-            <TextField label="Metabolic Age" type="number" value={form.metabolicAge} onChange={setField('metabolicAge')} />
+            <TextField label="% Proteína" type="number" value={form.proteinPct} onChange={setField('proteinPct')} />
+            <TextField label="TMB" type="number" value={form.bmr} onChange={setField('bmr')} />
+            <TextField label="Edad Metabólica" type="number" value={form.metabolicAge} onChange={setField('metabolicAge')} />
           </Stack>
         </Collapse>
 
-        <Button type="submit" variant="contained">Save Measurement</Button>
+        <Button type="submit" variant="contained">Guardar Medición</Button>
       </Stack>
     </Box>
   );

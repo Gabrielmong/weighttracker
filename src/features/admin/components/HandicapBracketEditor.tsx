@@ -49,25 +49,28 @@ export function HandicapBracketEditor() {
 
   return (
     <Stack spacing={2}>
-      <Typography variant="h6">Age/Gender Handicap Brackets</Typography>
+      <Typography variant="h6">Rangos de Handicap por Edad/Género</Typography>
       {!loading && (
         <List>
           {data?.handicapBrackets.map((bracket) => (
             <ListItem key={bracket.id}>
-              <ListItemText primary={`${bracket.gender}, ${bracket.minAge}-${bracket.maxAge}`} secondary={`×${bracket.multiplier}`} />
+              <ListItemText
+                primary={`${bracket.gender === 'MALE' ? 'Hombre' : 'Mujer'}, ${bracket.minAge}-${bracket.maxAge}`}
+                secondary={`×${bracket.multiplier}`}
+              />
             </ListItem>
           ))}
         </List>
       )}
       <Stack direction="row" spacing={2}>
-        <TextField select label="Gender" value={gender} onChange={(e) => setGender(e.target.value as 'MALE' | 'FEMALE')}>
-          <MenuItem value="MALE">Male</MenuItem>
-          <MenuItem value="FEMALE">Female</MenuItem>
+        <TextField select label="Género" value={gender} onChange={(e) => setGender(e.target.value as 'MALE' | 'FEMALE')}>
+          <MenuItem value="MALE">Masculino</MenuItem>
+          <MenuItem value="FEMALE">Femenino</MenuItem>
         </TextField>
-        <TextField label="Min Age" type="number" value={minAge} onChange={(e) => setMinAge(e.target.value)} />
-        <TextField label="Max Age" type="number" value={maxAge} onChange={(e) => setMaxAge(e.target.value)} />
-        <TextField label="Multiplier" type="number" value={multiplier} onChange={(e) => setMultiplier(e.target.value)} />
-        <Button variant="contained" onClick={handleAdd}>Add / Update</Button>
+        <TextField label="Edad Mín." type="number" value={minAge} onChange={(e) => setMinAge(e.target.value)} />
+        <TextField label="Edad Máx." type="number" value={maxAge} onChange={(e) => setMaxAge(e.target.value)} />
+        <TextField label="Multiplicador" type="number" value={multiplier} onChange={(e) => setMultiplier(e.target.value)} />
+        <Button variant="contained" onClick={handleAdd}>Agregar / Actualizar</Button>
       </Stack>
     </Stack>
   );

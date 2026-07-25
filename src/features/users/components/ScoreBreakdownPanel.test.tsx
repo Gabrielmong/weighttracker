@@ -15,7 +15,7 @@ describe('ScoreBreakdownPanel', () => {
         }}
       />
     );
-    expect(screen.getByText('Body Fat %')).toBeInTheDocument();
+    expect(screen.getByText('% Grasa Corporal')).toBeInTheDocument();
     expect(screen.getAllByText(/34.65/).length).toBeGreaterThan(0);
   });
 
@@ -31,8 +31,8 @@ describe('ScoreBreakdownPanel', () => {
         }}
       />
     );
-    expect(screen.getByText(/How this is calculated/i)).toBeInTheDocument();
-    expect(screen.getByText(/Body Fat %: \+20\.00% × 1\.50 = \+30\.00/)).toBeInTheDocument();
+    expect(screen.getByText(/Cómo se calcula esto/i)).toBeInTheDocument();
+    expect(screen.getByText(/% Grasa Corporal: \+20\.00% × 1\.50 = \+30\.00/)).toBeInTheDocument();
     expect(screen.getByText(/= 30\.00 × 1\.10 × 1\.05/)).toBeInTheDocument();
   });
 });

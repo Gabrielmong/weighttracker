@@ -30,9 +30,9 @@ export function AppNavBar() {
   const sessionUser = session.user as { id?: string; isAdmin?: boolean } | undefined;
 
   const links: NavLink[] = [
-    { label: 'Leaderboard', href: '/leaderboard' },
-    { label: 'Record Measurement', href: '/measurements/new' },
-    ...(sessionUser?.id ? [{ label: 'My Profile', href: `/users/${sessionUser.id}` }] : []),
+    { label: 'Tabla de Posiciones', href: '/leaderboard' },
+    { label: 'Registrar Medición', href: '/measurements/new' },
+    ...(sessionUser?.id ? [{ label: 'Mi Perfil', href: `/users/${sessionUser.id}` }] : []),
     ...(sessionUser?.isAdmin ? [{ label: 'Admin', href: '/admin' }] : []),
   ];
 
@@ -63,7 +63,7 @@ export function AppNavBar() {
         <Box sx={{ flexGrow: 1, display: { xs: 'none', md: 'block' } }} />
 
         <Button color="inherit" onClick={() => signOut({ callbackUrl: '/login' })} sx={{ display: { xs: 'none', md: 'inline-flex' } }}>
-          Log out
+          Cerrar Sesión
         </Button>
       </Toolbar>
 

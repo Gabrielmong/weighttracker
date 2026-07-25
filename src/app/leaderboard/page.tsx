@@ -52,18 +52,18 @@ export default function LeaderboardPage() {
 
   return (
     <Container maxWidth="lg" sx={{ mt: 4 }}>
-      <Typography variant="h4" gutterBottom>Leaderboard</Typography>
+      <Typography variant="h4" gutterBottom>Tabla de Posiciones</Typography>
       <Button component={Link} href="/measurements/new" variant="contained" sx={{ mb: 2 }}>
-        Record a Measurement
+        Registrar una Medición
       </Button>
       <LeaderboardFilters value={filters} onChange={setFilters} />
-      {error && <Alert severity="error" sx={{ mb: 2 }}>Failed to load the leaderboard: {error.message}</Alert>}
+      {error && <Alert severity="error" sx={{ mb: 2 }}>No se pudo cargar la tabla de posiciones: {error.message}</Alert>}
       {loading ? (
         <CircularProgress />
       ) : (
         !error && (
           data?.leaderboard.length === 0 ? (
-            <Typography color="text.secondary">No one has recorded a follow-up measurement yet.</Typography>
+            <Typography color="text.secondary">Nadie ha registrado una medición de seguimiento todavía.</Typography>
           ) : (
             <>
               <Box
