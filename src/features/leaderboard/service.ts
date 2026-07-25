@@ -50,8 +50,12 @@ export async function getLeaderboard(filters: LeaderboardFilters, asOf: Date = n
 
   for (const user of users) {
     const age = calculateAge(user.birthdate, asOf);
-    if (filters.minAge !== undefined && age < filters.minAge) continue;
-    if (filters.maxAge !== undefined && age > filters.maxAge) continue;
+    // Use != null (not !== undefined) so an explicit GraphQL `null` variable
+    // — sent verbatim by the client for "no filter", not omitted — isn't
+    // mistaken for a real filter value. `age > null` coerces null to 0 and
+    // is true for any positive age, which previously excluded every user.
+    if (filters.minAge != null && age < filters.minAge) continue;
+    if (filters.maxAge != null && age > filters.maxAge) continue;
 
     const baseline = user.measurements.find((m) => m.isBaseline);
     const latest = user.measurements

@@ -67,6 +67,16 @@ describe('getLeaderboard', () => {
     expect(rows.map((r) => r.displayName)).toEqual(['Alice']);
   });
 
+  it('does not filter anyone out when minAge/maxAge are explicitly null (GraphQL "All Ages" default)', async () => {
+    // A GraphQL client sending a variable with value null (not omitting it)
+    // forwards literal `null`, not `undefined`. `age > null` coerces null to
+    // 0, so a naive `filters.maxAge !== undefined` guard treats explicit
+    // null as "apply this filter" and silently excludes every user.
+    (prisma.user.findMany as any).mockResolvedValue([baseUser]);
+    const rows = await getLeaderboard({ minAge: null as unknown as number, maxAge: null as unknown as number });
+    expect(rows).toHaveLength(1);
+  });
+
   it('ranks by a single metric, unhandicapped, when metricKey is provided', async () => {
     const other = {
       ...baseUser,
