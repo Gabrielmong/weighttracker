@@ -1,4 +1,5 @@
-import { Table, TableHead, TableRow, TableCell, TableBody, Paper, Typography, Chip } from '@mui/material';
+import { Table, TableHead, TableRow, TableCell, TableBody, Paper, Typography, Chip, IconButton } from '@mui/material';
+import EditIcon from '@mui/icons-material/Edit';
 
 export interface MeasurementRow {
   id: string;
@@ -20,7 +21,16 @@ function fmt(value: number): string {
   return value.toFixed(1);
 }
 
-export function MeasurementsTable({ measurements }: { measurements: MeasurementRow[] }) {
+export function MeasurementsTable({
+  measurements,
+  canEdit = false,
+  onEdit,
+}: {
+  measurements: MeasurementRow[];
+  /** Only an admin may edit a recorded measurement. */
+  canEdit?: boolean;
+  onEdit?: (measurement: MeasurementRow) => void;
+}) {
   if (measurements.length === 0) {
     return <Typography color="text.secondary">Todavía no hay mediciones registradas.</Typography>;
   }
@@ -44,6 +54,7 @@ export function MeasurementsTable({ measurements }: { measurements: MeasurementR
             {hasOptional && <TableCell align="right">% Proteína</TableCell>}
             {hasOptional && <TableCell align="right">TMB</TableCell>}
             {hasOptional && <TableCell align="right">Edad Metabólica</TableCell>}
+            {canEdit && <TableCell align="right"></TableCell>}
           </TableRow>
         </TableHead>
         <TableBody>
@@ -63,6 +74,13 @@ export function MeasurementsTable({ measurements }: { measurements: MeasurementR
               {hasOptional && <TableCell align="right">{m.proteinPct != null ? fmt(m.proteinPct) : '—'}</TableCell>}
               {hasOptional && <TableCell align="right">{m.bmr != null ? fmt(m.bmr) : '—'}</TableCell>}
               {hasOptional && <TableCell align="right">{m.metabolicAge ?? '—'}</TableCell>}
+              {canEdit && (
+                <TableCell align="right">
+                  <IconButton aria-label="Editar" size="small" onClick={() => onEdit?.(m)}>
+                    <EditIcon fontSize="small" />
+                  </IconButton>
+                </TableCell>
+              )}
             </TableRow>
           ))}
         </TableBody>

@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { recordMeasurement } from './service';
+import { recordMeasurement, updateMeasurement } from './service';
 import { prisma } from '@/lib/prisma';
 
 vi.mock('@/lib/prisma', () => ({
@@ -69,6 +69,44 @@ describe('recordMeasurement', () => {
       data: { isBaseline: false },
     });
     expect(prisma.measurement.update).toHaveBeenCalledWith({ where: { id: 'm3' }, data: { isBaseline: true } });
+    expect(result.isBaseline).toBe(true);
+  });
+});
+
+describe('updateMeasurement', () => {
+  beforeEach(() => vi.clearAllMocks());
+
+  it('updates the provided fields and recomputes the baseline', async () => {
+    (prisma.measurement.findUniqueOrThrow as any)
+      .mockResolvedValueOnce({ id: 'm2', userId: 'user-1', challengeId: 'challenge-1' }) // lookup before update
+      .mockResolvedValueOnce({ id: 'm2', isBaseline: false, weightKg: 87 }); // refetch after update
+    (prisma.measurement.findMany as any).mockResolvedValue([{ id: 'm1' }, { id: 'm2' }]);
+
+    const result = await updateMeasurement({ id: 'm2', ...baseInput, weightKg: 87 });
+
+    expect(prisma.measurement.update).toHaveBeenCalledWith({
+      where: { id: 'm2' },
+      data: expect.objectContaining({ weightKg: 87 }),
+    });
+    expect(prisma.measurement.updateMany).toHaveBeenCalledWith({
+      where: { userId: 'user-1', challengeId: 'challenge-1', NOT: { id: 'm1' } },
+      data: { isBaseline: false },
+    });
+    expect(result.weightKg).toBe(87);
+  });
+
+  it('moves the baseline when a measurement is edited to a chronologically earlier date', async () => {
+    (prisma.measurement.findUniqueOrThrow as any)
+      .mockResolvedValueOnce({ id: 'm2', userId: 'user-1', challengeId: 'challenge-1' })
+      .mockResolvedValueOnce({ id: 'm2', isBaseline: true });
+    // m2 now sorts first after its recordedAt was edited to an earlier date.
+    (prisma.measurement.findMany as any).mockResolvedValue([{ id: 'm2' }, { id: 'm1' }]);
+
+    const result = await updateMeasurement({ id: 'm2', ...baseInput, recordedAt: '2025-01-01T00:00:00.000Z' });
+
+    const updateArgs = (prisma.measurement.update as any).mock.calls[0][0];
+    expect(updateArgs.data.recordedAt).toEqual(new Date('2025-01-01T00:00:00.000Z'));
+    expect(prisma.measurement.update).toHaveBeenLastCalledWith({ where: { id: 'm2' }, data: { isBaseline: true } });
     expect(result.isBaseline).toBe(true);
   });
 });

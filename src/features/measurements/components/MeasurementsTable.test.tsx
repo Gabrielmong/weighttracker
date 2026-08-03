@@ -1,6 +1,12 @@
-import { describe, it, expect } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { describe, it, expect, vi } from 'vitest';
+import { render, screen, fireEvent } from '@testing-library/react';
 import { MeasurementsTable } from './MeasurementsTable';
+
+const sampleMeasurement = {
+  id: 'm1', recordedAt: '2026-01-01T00:00:00.000Z', weightKg: 90, bmi: 28, bodyFatPct: 25,
+  subcutaneousFatPct: 18, visceralFatRating: 10, skeletalMusclePct: 32, muscleMassKg: 28,
+  proteinPct: null, bmr: null, metabolicAge: null, isBaseline: true,
+};
 
 describe('MeasurementsTable', () => {
   it('renders one row per measurement with its date and values, marking the baseline', () => {
@@ -31,5 +37,19 @@ describe('MeasurementsTable', () => {
   it('shows a friendly message when there are no measurements yet', () => {
     render(<MeasurementsTable measurements={[]} />);
     expect(screen.getByText(/no hay mediciones registradas/i)).toBeInTheDocument();
+  });
+
+  it('does not show an edit button by default', () => {
+    render(<MeasurementsTable measurements={[sampleMeasurement]} />);
+    expect(screen.queryByRole('button', { name: /editar/i })).not.toBeInTheDocument();
+  });
+
+  it('shows an edit button per row when canEdit is true, and calls onEdit with that row', () => {
+    const onEdit = vi.fn();
+    render(<MeasurementsTable measurements={[sampleMeasurement]} canEdit onEdit={onEdit} />);
+
+    fireEvent.click(screen.getByRole('button', { name: /editar/i }));
+
+    expect(onEdit).toHaveBeenCalledWith(sampleMeasurement);
   });
 });

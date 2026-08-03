@@ -36,6 +36,31 @@ export async function recordMeasurement(userId: string, challengeId: string, inp
   return prisma.measurement.findUniqueOrThrow({ where: { id: created.id } });
 }
 
+export interface UpdateMeasurementInput extends RecordMeasurementInput {
+  id: string;
+}
+
+export async function updateMeasurement(input: UpdateMeasurementInput) {
+  const { id, recordedAt, ...rest } = input;
+
+  const existing = await prisma.measurement.findUniqueOrThrow({ where: { id } });
+
+  await prisma.measurement.update({
+    where: { id },
+    data: {
+      ...rest,
+      recordedAt: recordedAt ? new Date(recordedAt) : undefined,
+    },
+  });
+
+  // Editing a measurement (especially its date) can change which one is
+  // chronologically earliest, so the baseline must be recomputed — same as
+  // when a new measurement is recorded.
+  await recomputeBaseline(existing.userId, existing.challengeId);
+
+  return prisma.measurement.findUniqueOrThrow({ where: { id } });
+}
+
 async function recomputeBaseline(userId: string, challengeId: string) {
   const measurements = await prisma.measurement.findMany({
     where: { userId, challengeId },

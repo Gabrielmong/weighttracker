@@ -1,5 +1,5 @@
-import { GraphQLContext, requireUser } from '@/lib/graphql/context';
-import { recordMeasurement, listMeasurementsForUser } from '../service';
+import { GraphQLContext, requireUser, requireAdmin } from '@/lib/graphql/context';
+import { recordMeasurement, updateMeasurement, listMeasurementsForUser } from '../service';
 
 export const resolvers = {
   Measurement: {
@@ -15,6 +15,13 @@ export const resolvers = {
       if (!challenge) return [];
       return listMeasurementsForUser(user.id, challenge.id);
     },
+    userMeasurements: async (_parent: unknown, args: { userId: string }, context: GraphQLContext) => {
+      const user = requireUser(context);
+      if (user.id !== args.userId) requireAdmin(context);
+      const challenge = await context.prisma.challenge.findFirst({ where: { isActive: true } });
+      if (!challenge) return [];
+      return listMeasurementsForUser(args.userId, challenge.id);
+    },
   },
   Mutation: {
     recordMeasurement: async (_parent: unknown, args: { input: any }, context: GraphQLContext) => {
@@ -22,6 +29,10 @@ export const resolvers = {
       const challenge = await context.prisma.challenge.findFirst({ where: { isActive: true } });
       if (!challenge) throw new Error('No hay un reto activo.');
       return recordMeasurement(user.id, challenge.id, args.input);
+    },
+    updateMeasurement: async (_parent: unknown, args: { input: any }, context: GraphQLContext) => {
+      requireAdmin(context);
+      return updateMeasurement(args.input);
     },
   },
 };

@@ -9,6 +9,7 @@ import { Container, Typography, CircularProgress, Stack, Box, Alert, TextField, 
 import { TimelineChart } from '@/features/users/components/TimelineChart';
 import { ScoreBreakdownPanel, ScoreBreakdown } from '@/features/users/components/ScoreBreakdownPanel';
 import { MeasurementsTable, MeasurementRow } from '@/features/measurements/components/MeasurementsTable';
+import { EditMeasurementDialog } from '@/features/measurements/components/EditMeasurementDialog';
 import { METRIC_LABELS } from '@/features/scoring/metricLabels';
 import { MetricKey } from '@/features/scoring/types';
 
@@ -25,8 +26,8 @@ interface UserDetailQueryData {
   } | null;
 }
 
-interface MyMeasurementsQueryData {
-  myMeasurements: MeasurementRow[];
+interface UserMeasurementsQueryData {
+  userMeasurements: MeasurementRow[];
 }
 
 const USER_DETAIL_QUERY = gql`
@@ -57,9 +58,9 @@ const USER_DETAIL_QUERY = gql`
   }
 `;
 
-const MY_MEASUREMENTS_QUERY = gql`
-  query MyMeasurements {
-    myMeasurements {
+const USER_MEASUREMENTS_QUERY = gql`
+  query UserMeasurements($userId: ID!) {
+    userMeasurements(userId: $userId) {
       id
       recordedAt
       weightKg
@@ -81,11 +82,19 @@ export default function UserDetailPage() {
   const params = useParams<{ id: string }>();
   const { data: session } = useSession();
   const [metricKey, setMetricKey] = useState<MetricKey>('BODY_FAT_PCT');
+  const [editingMeasurement, setEditingMeasurement] = useState<MeasurementRow | null>(null);
 
   const { data, loading, error } = useQuery<UserDetailQueryData>(USER_DETAIL_QUERY, { variables: { userId: params.id } });
 
-  const isOwnProfile = (session?.user as { id?: string } | undefined)?.id === params.id;
-  const { data: myMeasurementsData } = useQuery<MyMeasurementsQueryData>(MY_MEASUREMENTS_QUERY, { skip: !isOwnProfile });
+  const sessionUser = session?.user as { id?: string; isAdmin?: boolean } | undefined;
+  const isOwnProfile = sessionUser?.id === params.id;
+  const isAdmin = !!sessionUser?.isAdmin;
+  const canSeeMeasurements = isOwnProfile || isAdmin;
+
+  const { data: measurementsData, refetch: refetchMeasurements } = useQuery<UserMeasurementsQueryData>(USER_MEASUREMENTS_QUERY, {
+    variables: { userId: params.id },
+    skip: !canSeeMeasurements,
+  });
 
   if (loading) return <CircularProgress />;
   if (error) return <Alert severity="error">No se pudo cargar este perfil: {error.message}</Alert>;
@@ -126,12 +135,25 @@ export default function UserDetailPage() {
         </Stack>
       </Box>
 
-      {isOwnProfile && (
+      {canSeeMeasurements && (
         <Box sx={{ mt: 3 }}>
-          <Typography variant="h6" gutterBottom>Tus Mediciones</Typography>
-          <MeasurementsTable measurements={myMeasurementsData?.myMeasurements ?? []} />
+          <Typography variant="h6" gutterBottom>{isOwnProfile ? 'Tus Mediciones' : 'Mediciones'}</Typography>
+          <MeasurementsTable
+            measurements={measurementsData?.userMeasurements ?? []}
+            canEdit={isAdmin}
+            onEdit={setEditingMeasurement}
+          />
         </Box>
       )}
+
+      <EditMeasurementDialog
+        measurement={editingMeasurement}
+        onClose={() => setEditingMeasurement(null)}
+        onSaved={() => {
+          setEditingMeasurement(null);
+          refetchMeasurements();
+        }}
+      />
     </Container>
   );
 }
